@@ -17,4 +17,3 @@ def list_serial_ports() -> list[str]:
 
 def list_baudrates() -> list[str]:
     return ["9600","115200"]
-

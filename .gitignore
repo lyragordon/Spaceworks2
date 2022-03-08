@@ -1,2 +1,3 @@
-__pycache__/comm.cpython-310.pyc
-__pycache__/dummy_serial.cpython-310.pyc
+__pycache__/
+env/
+Pipfile.lock
