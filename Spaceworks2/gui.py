@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
         self.btn_request_frame.clicked.connect(self.evt_request_frame)
         self.btn_request_frame.setEnabled(False)
         self.ping_timer = QTimer()
-        self.ping_timer.setInterval(1000)
+        self.ping_timer.setInterval(comm.PING_INTERVAL)
         self.ping_timer.timeout.connect(self.ping_serial)
         self.ping_timer.start()
         # Reset button

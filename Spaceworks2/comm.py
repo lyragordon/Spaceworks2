@@ -7,6 +7,7 @@ REQUEST_TIMEOUT = 5 #seconds
 PING_COMMAND = 'ping'.encode('utf-8')
 PING_RESPONSE = 'pong'.encode('utf-8')
 PING_TIMEOUT = 0.5 #seconds
+PING_INTERVAL = 2000 #milliseconds
 
 def list_serial_ports() -> list[str]:
     """Returns a list of available serial ports"""
