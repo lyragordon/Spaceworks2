@@ -218,3 +218,8 @@ class SerialSetup(QDialog):
             self.cbb_Baudrate.addItems(new_options)
         if saved_selection in new_options:
             self.cbb_Baudrate.setCurrentText(saved_selection)
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        if not self.parent.serial:
+            self.parent.close()
+        return super().closeEvent(a0)
