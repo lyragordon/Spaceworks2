@@ -32,10 +32,11 @@ class Dummy:
             mode (int, optional): data mode, either SAMPLE,LINEAR,or RANDOM. Defaults to SAMPLE.
         """
         self.mode = mode
-        self.ready = False
+        self.requested = False
+        self.pinged = False
 
     def readline(self) -> bytes:
-        if self.ready:
+        if self.requested:
             if self.mode == LINEAR:
                 text = str([float('{:.2f}'.format(float(SPAN*i/NUM_VALS)+RANGE[0])) for i in range(NUM_VALS)])[1:-1]
             elif self.mode == RANDOM:
@@ -48,19 +49,26 @@ class Dummy:
             else:
                 raise ArgumentError("invalid mode")
 
-            self.ready = False
+            self.requested = False
             return bytes(text,encoding='utf-8')
+        elif self.pinged:
+            self.pinged = False
+            return comm.PING_RESPONSE
 
+    def readlines(self) -> list[bytes]:
+        return [self.readline()]
 
     def isOpen(self) ->bool:
         return True
     
     def inWaiting(self) ->bool:
-        return True if self.ready else False
+        return True if self.requested or self.pinged else False
 
     def write(self,cmd:bytes):
         if cmd == comm.REQUEST_COMMAND:
-           self.ready = True
+           self.requested = True
+        elif cmd == comm.PING_COMMAND:
+            self.pinged = True
 
 def get_modes() -> list[str]:
     return MODES
