@@ -2,12 +2,13 @@ from serial import Serial
 from serial.tools import list_ports
 
 REQUEST_COMMAND = 'r'.encode('utf-8')
-REQUEST_TIMEOUT = 5 #seconds
+REQUEST_TIMEOUT = 5  # seconds
 
 PING_COMMAND = 'ping'.encode('utf-8')
 PING_RESPONSE = 'pong'.encode('utf-8')
-PING_TIMEOUT = 0.5 #seconds
-PING_INTERVAL = 2000 #milliseconds
+PING_TIMEOUT = 0.5  # seconds
+PING_INTERVAL = 2000  # milliseconds
+
 
 def list_serial_ports() -> list[str]:
     """Returns a list of available serial ports"""
@@ -19,6 +20,5 @@ def list_serial_ports() -> list[str]:
     return ports
 
 
-
 def list_baudrates() -> list[str]:
-    return ["9600","115200"]
+    return ["9600", "115200"]
