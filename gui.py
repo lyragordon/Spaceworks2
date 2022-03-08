@@ -1,5 +1,5 @@
 import sys
-import lyra
+import comm
 import time
 import dummy_serial
 from serial import Serial
@@ -74,8 +74,8 @@ class MainWindow(QMainWindow):
             
     def evt_request_frame(self):
         """Requests a data frame over serial and displays it."""
-        self.serial.write(lyra.REQUEST_COMMAND)
-        timeout = time.time() + lyra.REQUEST_TIMEOUT
+        self.serial.write(comm.REQUEST_COMMAND)
+        timeout = time.time() + comm.REQUEST_TIMEOUT
         while self.serial.inWaiting() == 0:
             time.sleep(1)
             if time.time() > timeout:
@@ -178,7 +178,7 @@ class SerialSetup(QDialog):
     def update_cbb_SerialPort(self):
         """Reloads the serialport dropdown. We want to do this on every interaction to keep the serial port list up-to-date."""
         saved_selection = self.cbb_SerialPort.currentText()
-        new_options = ["Choose a serial port..."] + lyra.list_serial_ports()
+        new_options = ["Choose a serial port..."] + comm.list_serial_ports()
         self.cbb_SerialPort.clear()
         self.cbb_SerialPort.addItems(new_options)
         if saved_selection in new_options:
@@ -193,7 +193,7 @@ class SerialSetup(QDialog):
             self.cbb_Baudrate.addItems(new_options)
         else:
             self.cbb_Baudrate.clear()
-            new_options = ["Choose a baudrate...            "] + lyra.list_baudrates()
+            new_options = ["Choose a baudrate...            "] + comm.list_baudrates()
             self.cbb_Baudrate.addItems(new_options)
         if saved_selection in new_options:
             self.cbb_Baudrate.setCurrentText(saved_selection)

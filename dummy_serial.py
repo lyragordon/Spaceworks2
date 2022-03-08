@@ -2,7 +2,7 @@
 from argparse import ArgumentError
 import numpy
 
-import lyra
+import comm
 
 
 SAMPLE = 0
@@ -60,7 +60,7 @@ class Dummy:
         return True if self.ready else False
 
     def write(self,cmd:bytes):
-        if cmd == lyra.REQUEST_COMMAND:
+        if cmd == comm.REQUEST_COMMAND:
            self.ready = True
 
 def get_modes() -> list[str]:
