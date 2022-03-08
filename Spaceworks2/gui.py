@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
             if time.time() > timeout:
                 self.update_terminal("<b>REQUEST TIMEOUT</b>")
                 break
-        #raw = self.serial.readline()
+        #raw_data = self.serial.readline()
         #TODO validate data frame
         #TODO new dialog that displays heatmap
     
@@ -203,12 +203,3 @@ class SerialSetup(QDialog):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
-        
-
-        
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    dlgMain = MainWindow()
-    sys.exit(app.exec_())
