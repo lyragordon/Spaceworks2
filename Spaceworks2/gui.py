@@ -3,9 +3,11 @@ import comm
 import time
 import dummy_serial
 from serial import Serial
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, QObject, pyqtSignal
+from PyQt5 import QtCore
 
 class TerminalThread(QObject):
     """Thread that pushes lines to the terminal display"""
@@ -29,6 +31,7 @@ class MainWindow(QMainWindow):
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         # window settings
+        self.setWindowTitle("SW2")
         self.setWindowIcon(self.style().standardIcon(getattr(QStyle,'SP_CommandLink')))
         self.serial = None
         # prompt for serial config
@@ -55,7 +58,7 @@ class MainWindow(QMainWindow):
         self.window.show()
         # window settings
         self.setCentralWidget(self.window)
-        self.centerWindow()
+        
         self.show()
         
     def update_terminal(self, line:str):
@@ -81,7 +84,7 @@ class MainWindow(QMainWindow):
             if time.time() > timeout:
                 self.update_terminal("<b>REQUEST TIMEOUT</b>")
                 break
-        #raw = self.serial.readline()
+        #raw_data = self.serial.readline()
         #TODO validate data frame
         #TODO new dialog that displays heatmap
     
@@ -106,13 +109,19 @@ class MainWindow(QMainWindow):
         self.terminal_worker.progress.connect(self.update_terminal)
         self.terminal_thread.start()
 
-    def centerWindow(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
 
-        
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        if self.serial:
+            reply = QMessageBox.question(self,"Exit?","A serial connection is active. Do you really want to exit?",QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                event.accept()
+                return super().closeEvent(event)
+            else:
+                event.ignore()
+        else:
+            event.accept()
+    
+   
     
     
 
@@ -126,6 +135,7 @@ class SerialSetup(QDialog):
         self.parent = parent
         self.setWindowTitle("Serial Setup")
         self.setWindowIcon(self.style().standardIcon(getattr(QStyle,'SP_MessageBoxQuestion')))
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint) 
         # ok button
         self.btn_Ok = QPushButton("Ok",self)
         self.btn_Ok.clicked.connect(self.evt_btn_Ok)
@@ -152,7 +162,6 @@ class SerialSetup(QDialog):
         self.setLayout(self.horiz_layout)
         # window settings
         self.resize(self.sizeHint())
-        self.centerWindow()
         self.show()
 
     def evt_btn_Ok(self):
@@ -197,18 +206,3 @@ class SerialSetup(QDialog):
             self.cbb_Baudrate.addItems(new_options)
         if saved_selection in new_options:
             self.cbb_Baudrate.setCurrentText(saved_selection)
-
-    def centerWindow(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
-        
-
-        
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    dlgMain = MainWindow()
-    sys.exit(app.exec_())
