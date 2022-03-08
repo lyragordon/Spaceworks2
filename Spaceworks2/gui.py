@@ -7,6 +7,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, QObject, pyqtSignal
+from PyQt5 import QtCore
 
 class TerminalThread(QObject):
     """Thread that pushes lines to the terminal display"""
@@ -134,6 +135,7 @@ class SerialSetup(QDialog):
         self.parent = parent
         self.setWindowTitle("Serial Setup")
         self.setWindowIcon(self.style().standardIcon(getattr(QStyle,'SP_MessageBoxQuestion')))
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint) 
         # ok button
         self.btn_Ok = QPushButton("Ok",self)
         self.btn_Ok.clicked.connect(self.evt_btn_Ok)
