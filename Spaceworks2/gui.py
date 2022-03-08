@@ -1,3 +1,4 @@
+from math import fabs
 import sys
 import comm
 import time
@@ -6,7 +7,7 @@ from serial import Serial
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QThread, QObject, pyqtSignal
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, QTimer
 from PyQt5 import QtCore
 
 class TerminalThread(QObject):
@@ -36,11 +37,15 @@ class MainWindow(QMainWindow):
         self.serial = None
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
-        # Request button
+        # Request button that's only active when ping is reciprocated
         self.btn_request_frame = QPushButton("Request",self)
         self.btn_request_frame.resize(self.btn_request_frame.sizeHint())
         self.btn_request_frame.clicked.connect(self.evt_request_frame)
-        #TODO deactivate request button until some ping function shows the serial device is "ready"
+        self.btn_request_frame.setEnabled(False)
+        self.ping_timer = QTimer()
+        self.ping_timer.setInterval(comm.PING_INTERVAL)
+        self.ping_timer.timeout.connect(self.ping_serial)
+        self.ping_timer.start()
         # Reset button
         self.btn_reset_serial = QPushButton("Reset",self)
         self.btn_reset_serial.resize(self.btn_reset_serial.sizeHint())
@@ -83,7 +88,7 @@ class MainWindow(QMainWindow):
             time.sleep(1)
             if time.time() > timeout:
                 self.update_terminal("<b>REQUEST TIMEOUT</b>")
-                break
+                return
         #raw_data = self.serial.readline()
         #TODO validate data frame
         #TODO new dialog that displays heatmap
@@ -133,7 +138,36 @@ class MainWindow(QMainWindow):
         error = QMessageBox.critical(self, "Serial Error", "The serial connection has encountered an error.")
         SerialSetup(self)
     
-   
+    def ping_serial(self):
+        """Pings serial object and enables request button if it's active"""
+        # This one's a bit of a doozy so I'll comment it fully
+        if self.serial and self.serial.isOpen():
+            # Send 'ping'
+            self.serial.write(comm.PING_COMMAND)
+            # Wait for a response (this should be done in a QThread....)
+            timeout = time.process_time() + comm.PING_TIMEOUT
+            while self.serial.inWaiting() == 0:
+                if time.process_time() > timeout:
+                    self.btn_request_frame.setEnabled(False)
+                    self.update_terminal("<b>PING TIMEOUT</b>")
+                    return
+            # Read as many lines as are available, one of which may be the 'pong'
+            raw_lines = self.serial.readlines()
+            # If the 'pong' is in those lines, enable the button and pass the rest of the lines to the terminal
+            if comm.PING_RESPONSE in raw_lines:
+                self.btn_request_frame.setEnabled(True)
+                if len(raw_lines) > 1:
+                    other_lines = raw_lines.pop(raw_lines.index(comm.PING_RESPONSE))
+                    for line in other_lines:
+                        self.update_terminal(line.decode('utf-8'))
+            # If the 'pong' isnt in those lines, just pass them to the terminal and deactivate the button
+            else:
+                self.btn_request_frame.setEnabled(False)
+                for line in raw_lines:
+                    self.update_terminal(line.decode('utf-8'))
+        else:
+            self.btn_request_frame.setEnabled(False)
+
     
     
 
@@ -218,3 +252,8 @@ class SerialSetup(QDialog):
             self.cbb_Baudrate.addItems(new_options)
         if saved_selection in new_options:
             self.cbb_Baudrate.setCurrentText(saved_selection)
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        if not self.parent.serial:
+            self.parent.close()
+        return super().closeEvent(a0)
