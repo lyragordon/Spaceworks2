@@ -98,7 +98,11 @@ class MainWindow(QMainWindow):
         if port == "Dummy":
             self.serial = dummy_serial.Dummy(dummy_serial.get_mode_from_str(baudrate))
         else:
-            self.serial = Serial(port,baudrate = int(baudrate))
+            try:
+                self.serial = Serial(port,baudrate = int(baudrate))
+            except:
+                self.evt_serial_connection_error()
+                return
 
         self.terminal_worker = TerminalThread(self.serial)
         self.terminal_worker.moveToThread(self.terminal_thread)
@@ -120,6 +124,12 @@ class MainWindow(QMainWindow):
                 event.ignore()
         else:
             event.accept()
+
+    def evt_serial_connection_error(self):
+        self.serial = None
+        #maybe have to close terminal thread here if i want to go right back to serial selection. will probably just close
+        error = QMessageBox.critical(self, "Serial Error", "The serial connection has encountered an error.")
+        SerialSetup(self)
     
    
     
