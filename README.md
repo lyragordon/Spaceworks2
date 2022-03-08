@@ -1,2 +1,2 @@
 # Spaceworks2
-SES407
+A GUI Python program for a SES407 project.
