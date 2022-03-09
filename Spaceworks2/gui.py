@@ -33,9 +33,10 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         # window settings
-        self.setWindowTitle("SW2")
+        self.setWindowTitle("Spaceworks2")
         self.setWindowIcon(self.style().standardIcon(
             getattr(QStyle, 'SP_CommandLink')))
+        self.resize(500, 500)
         self.serial = None
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
@@ -70,6 +71,7 @@ class MainWindow(QMainWindow):
 
     def update_terminal(self, line: str):
         """Adds a line to the terminal display."""
+        # TODO also write each line to a logfile in ../data/run_x
         self.terminal.append(line)
         self.terminal.resize(self.terminal.sizeHint())
         self.vert_layout.update()
@@ -78,7 +80,7 @@ class MainWindow(QMainWindow):
         """Resets the serial port on a hardware level."""
         if self.serial and not isinstance(self.serial, dummy.DummySerial):
             self.serial.setDTR(False)
-            time.sleep(0.5)
+            time.sleep(0.5)  # blocking, bad, i know
             self.serial.setDTR(True)
             time.sleep(0.5)
 
@@ -147,12 +149,13 @@ class MainWindow(QMainWindow):
         if self.serial and self.serial.isOpen():
             # Send 'ping'
             self.serial.write(comm.PING_COMMAND)
-            # Wait for a response (this should be done in a QThread....)
+            # Wait for a response (this should probably be done in a QThread.... whatever im not quite sure how to do it)
             timeout = time.process_time() + comm.PING_TIMEOUT
             while self.serial.inWaiting() == 0:
                 if time.process_time() > timeout:
                     self.btn_request_frame.setEnabled(False)
-                    self.update_terminal("<b>PING TIMEOUT</b>")
+                    self.update_terminal(
+                        "<b>Serial device not responding (PING TIMEOUT)</b>")
                     return
             # Read as many lines as are available, one of which may be the 'pong'
             raw_lines = self.serial.readlines()
@@ -185,6 +188,8 @@ class SerialSetup(QDialog):
             getattr(QStyle, 'SP_MessageBoxQuestion')))
         self.setWindowFlags(self.windowFlags() |
                             QtCore.Qt.WindowStaysOnTopHint)
+        # disables background window while this window is open
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
         # ok button
         self.btn_Ok = QPushButton("Ok", self)
         self.btn_Ok.clicked.connect(self.evt_btn_Ok)
@@ -214,6 +219,7 @@ class SerialSetup(QDialog):
         # window settings
         self.resize(self.sizeHint())
         self.show()
+        self.setEnabled(True)
 
     def evt_btn_Ok(self):
         """If none of the default entries are selected, passes serial port info to main window and closes."""
