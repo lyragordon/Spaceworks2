@@ -28,7 +28,7 @@ class PgImageWindow(QMainWindow):
         self.imageItem.setImage(np.transpose(self.data), autoLevels=True)
         self.imageItem.setAutoDownsample(True)
         nRows, nCols = data.shape
-        self.plotItem.setRange(xRange=[-10, nCols+10], yRange=[0, nRows])
+        self.plotItem.setRange(xRange=[-5, nCols+5], yRange=[0, nRows])
 
         self.imageItem.setColorMap(pg.colormap.getFromMatplotlib('plasma'))
         self.plotItem.addItem(self.imageItem)
