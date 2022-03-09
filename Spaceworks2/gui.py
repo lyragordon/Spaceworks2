@@ -1,8 +1,7 @@
-from math import fabs
 import sys
 import comm
 import time
-import dummy_serial
+import dummy
 from serial import Serial
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
@@ -11,8 +10,8 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, QTimer
 from PyQt5 import QtCore
 
 
-class TerminalThread(QObject):
-    """Thread that pushes lines to the terminal display"""
+class TerminalWorker(QObject):
+    """Thread worker that pushes lines to the terminal display"""
     progress = pyqtSignal(str)
     finished = pyqtSignal()
 
@@ -77,7 +76,7 @@ class MainWindow(QMainWindow):
 
     def evt_reset_serial(self):
         """Resets the serial port on a hardware level."""
-        if self.serial and not isinstance(self.serial, dummy_serial.Dummy):
+        if self.serial and not isinstance(self.serial, dummy.DummySerial):
             self.serial.setDTR(False)
             time.sleep(0.5)
             self.serial.setDTR(True)
@@ -104,8 +103,8 @@ class MainWindow(QMainWindow):
     def init_serial(self, port: str, baudrate: str):
         """Initializes the serial connection and the terminal updater thread."""
         if port == "Dummy":
-            self.serial = dummy_serial.Dummy(
-                dummy_serial.get_mode_from_str(baudrate))
+            self.serial = dummy.DummySerial(
+                dummy.get_mode_from_str(baudrate))
         else:
             try:
                 self.serial = Serial(port, baudrate=int(baudrate))
@@ -113,7 +112,7 @@ class MainWindow(QMainWindow):
                 self.evt_serial_connection_error()
                 return
 
-        self.terminal_worker = TerminalThread(self.serial)
+        self.terminal_worker = TerminalWorker(self.serial)
         self.terminal_worker.moveToThread(self.terminal_thread)
         self.terminal_thread.started.connect(self.terminal_worker.run)
         self.terminal_worker.finished.connect(self.serial_connection_lost)
@@ -252,7 +251,7 @@ class SerialSetup(QDialog):
         if self.cbb_SerialPort.currentText() == "Dummy":
             self.cbb_Baudrate.clear()
             new_options = ["Choose a dummy mode...   "] + \
-                dummy_serial.get_modes()
+                dummy.get_modes()
             self.cbb_Baudrate.addItems(new_options)
         else:
             self.cbb_Baudrate.clear()

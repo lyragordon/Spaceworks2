@@ -21,7 +21,7 @@ RANGE = (10, 30)
 SPAN = RANGE[1]-RANGE[0]
 
 
-class Dummy:
+class DummySerial:
     """Dummy serial port that can send SAMPLE camera data, LINEAR sweep, or RANDOM data
     """
 
