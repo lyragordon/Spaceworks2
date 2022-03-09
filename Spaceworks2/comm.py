@@ -51,7 +51,7 @@ def get_run() -> int:
 
 def init_run(run: int) -> Path:
     run_dir = DATA_DIR / f"run_{run}"
-    os.mkdir(run_dir)
+    run_dir.mkdir(parents=True)
     return run_dir
 
 
