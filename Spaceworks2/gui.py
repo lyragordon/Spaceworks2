@@ -10,6 +10,7 @@ import time
 import dummy
 import matplotlib
 from pgcolorbar.colorlegend import ColorLegendItem
+from typing import Tuple
 matplotlib.use('Qt5Agg')
 
 
@@ -17,19 +18,23 @@ class PgImageWindow(QMainWindow):
     def __init__(self, data: np.ndarray, run: int, frame: int, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Run {run} - Frame {frame}")
-
+        self.data = data
         self.plotItem = pg.PlotItem()
-        viewBox = self.plotItem.getViewBox()
+        self.viewBox = self.plotItem.getViewBox()
         # viewBox.disableAutoRange(pg.ViewBox.XYAxes)
-        viewBox.setAspectLocked(True)
+        self.viewBox.setAspectLocked(True)
 
         self.imageItem = pg.ImageItem()
-        self.imageItem.setImage(np.transpose(data), autoLevels=True)
+        self.imageItem.setImage(np.transpose(self.data), autoLevels=True)
         nRows, nCols = data.shape
         self.plotItem.setRange(xRange=[0, nCols], yRange=[0, nRows])
 
         self.imageItem.setColorMap(pg.colormap.getFromMatplotlib('plasma'))
         self.plotItem.addItem(self.imageItem)
+
+        self.crosshair = pg.TargetItem(
+            pos=[16, 12], movable=True, size=50, label=self.get_label_at_pos, labelOpts={'offset': (20, 20), 'color': 'k', 'fill': pg.mkBrush((255, 255, 255, 127))}, pen=pg.mkPen(color='k', width=3))
+        self.plotItem.addItem(self.crosshair)
 
         self.colorLegendItem = ColorLegendItem(
             imageItem=self.imageItem,
@@ -47,6 +52,7 @@ class PgImageWindow(QMainWindow):
         self.layout.addWidget(self.graphicsWidget)
         self.main_widget.setLayout(self.layout)
         self.setCentralWidget(self.main_widget)
+
         self.resize(1200, 800)
         self.center()
         self.show()
@@ -58,6 +64,11 @@ class PgImageWindow(QMainWindow):
         centerPoint = QApplication.desktop().screenGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
+
+    def get_label_at_pos(self, x_flt, y_flt) -> str:
+        x = int(x_flt)
+        y = int(y_flt)
+        return f"{self.data[x][y]} °C"
 
 
 class MainWindow(QMainWindow):
