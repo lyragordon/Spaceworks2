@@ -4,7 +4,7 @@ A GUI Python program for a spring 2022 SES407 project. Interfaces with a ItsyBit
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Running the app](#running-the-app)
-- [Credits](#credits)
+- [Acknowledgements](#acknowledgements)
 # Requirements
  - Python 3
  - Git
@@ -20,7 +20,7 @@ A GUI Python program for a spring 2022 SES407 project. Interfaces with a ItsyBit
 
 		python3 Spaceworks2/run.py
 
-# Credits
+# Acknowledgements
  - [Alexhuszagh/BreezeStyleSheets](https://github.com/Alexhuszagh/BreezeStyleSheets)
  - [pyqtgraph/pyqtgraph](https://github.com/pyqtgraph/pyqtgraph)
  - [titusjan/pgcolorbar](https://github.com/titusjan/pgcolorbar)

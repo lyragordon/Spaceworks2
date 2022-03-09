@@ -73,10 +73,9 @@ class PgImageWindow(QMainWindow):
         return f"{x},{y}\n{self.data[y][x]} °C"
 
     def get_max_pos(self, data: np.ndarray) -> Tuple:
-        print(max_index := data.argmax())
+        max_index = data.argmax()
         y = int(max_index/32)
         x = ((max_index) % 32)
-        print((x, y))
         return x+0.5, y+0.5
 
 
