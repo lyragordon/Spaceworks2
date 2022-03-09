@@ -1,19 +1,26 @@
-# Spaceworks2
-A GUI Python program for a spring 2022 SES407 project.
-## Setup
-1. Ensure Python 3 is installed
-2. Ensure git is installed
+A GUI Python program for a spring 2022 SES407 project. Interfaces with a ItsyBitsy M4 with an MLX90640 IR thermal camera.
 
-3. Open a terminal window where you want to download the Application
-4. Clone the repository
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Running the app](#running-the-app)
+- [Credits](#credits)
+# Requirements
+ - Python 3
+ - Git
+# Installation
+1. Clone the repository
 
 		git clone https://github.com/lyragordon/Spaceworks2_Python.git
-6. cd into the newly cloned repository
-7. checkout your branch
- 
-		git checkout -b BRANCH
- 
-8.  Install requirements
- 
+2. Install requirements
+
 		pip install -r requirements.txt
-9.  Set up VScode with git
+
+# Running the app
+
+		python3 Spaceworks2/run.py
+
+# Credits
+ - [Alexhuszagh/BreezeStyleSheets](https://github.com/Alexhuszagh/BreezeStyleSheets)
+ - [pyqtgraph/pyqtgraph](https://github.com/pyqtgraph/pyqtgraph)
+ - [titusjan/pgcolorbar](https://github.com/titusjan/pgcolorbar)
