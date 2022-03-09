@@ -49,7 +49,7 @@ class ImageWindow(QMainWindow):
         self.setWindowTitle(f"Run {run} - Frame {frame}")
         self.canvas = MplCanvas(self)
         self.heatmap = self.canvas.axes.imshow(
-            data, interpolation="none", cmap="viridis")
+            data, interpolation="none", cmap="jet")
         self.colorbar = self.canvas.fig.colorbar(self.heatmap)
         self.colorbar.minorticks_on()
         self.setCentralWidget(self.canvas)
