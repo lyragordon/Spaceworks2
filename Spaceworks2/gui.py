@@ -48,12 +48,13 @@ class ImageWindow(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle(f"Run {run} - Frame {frame}")
         self.canvas = MplCanvas(self)
-        #NOTE make sure higher number is red and lower is blue
-        self.canvas.axes.imshow(data, interpolation="none", cmap="viridis")
+        self.heatmap = self.canvas.axes.imshow(
+            data, interpolation="none", cmap="viridis")
+        self.colorbar = self.canvas.fig.colorbar(self.heatmap)
+        self.colorbar.minorticks_on()
         self.setCentralWidget(self.canvas)
         self.show()
         # TODO save frame as png and csv at data/run_N/frame_N.png & frame_N.csv
-        
 
 
 class MainWindow(QMainWindow):
@@ -167,6 +168,9 @@ class MainWindow(QMainWindow):
             "<center><b>Serial connection initiated.</b></center><br>")
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        # if no files were generated, delete the run directory
+        if list(self.run_dir.glob('*')) == []:
+            comm.remove_run_dir(self.run_dir)
         if self.serial:
             reply = QMessageBox.question(
                 self, "Exit?", "A serial connection is active.\nDo you really want to exit?", QMessageBox.Yes, QMessageBox.No)

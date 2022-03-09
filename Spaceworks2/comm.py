@@ -50,4 +50,10 @@ def get_run() -> int:
 
 
 def init_run(run: int) -> Path:
-    os.mkdir(DATA_DIR / f"run_{run}")
+    run_dir = DATA_DIR / f"run_{run}"
+    os.mkdir(run_dir)
+    return run_dir
+
+
+def remove_run_dir(dir: Path):
+    os.rmdir(dir)
