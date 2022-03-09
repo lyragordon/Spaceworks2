@@ -8,7 +8,7 @@ import breeze_resources
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    file = QFile(":/dark/stylesheet.qss")
+    file = QFile(":/light/stylesheet.qss")
     file.open(QFile.ReadOnly | QFile.Text)
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())

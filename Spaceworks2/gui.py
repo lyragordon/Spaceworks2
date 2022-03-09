@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, QTimer
 from PyQt5.QtGui import QIcon
@@ -41,18 +41,24 @@ class MplCanvas(FigureCanvasQTAgg):
         super().__init__(self.fig)
 
 
-class ImageWindowMpl(QMainWindow):
-    """QDialog containing canvas widget"""
+class MplImageWindow(QMainWindow):
+    """window containing canvas widget"""
 
     def __init__(self, data: np.ndarray, run: int, frame: int, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Run {run} - Frame {frame}")
         self.canvas = MplCanvas(self)
+        self.toolbar = NavigationToolbar2QT(self.canvas, self)
         self.heatmap = self.canvas.axes.imshow(
             data, interpolation="bilinear", cmap="plasma")
         self.colorbar = self.canvas.fig.colorbar(self.heatmap)
         self.colorbar.minorticks_on()
-        self.setCentralWidget(self.canvas)
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(self.canvas)
+        self.widget = QWidget()
+        self.widget.setLayout(self.layout)
+        self.setCentralWidget(self.widget)
         self.show()
         # TODO save frame as png and csv at data/run_N/frame_N.png & frame_N.csv
         # TODO add min/max crosshairs and readouts
@@ -137,7 +143,7 @@ class MainWindow(QMainWindow):
             return
         # TODO validate data frame (tho i sorta solved it with the try/except)
 
-        self.image_dialog = ImageWindowMpl(
+        self.image_dialog = MplImageWindow(
             array, self.run, self.frame, self)
         self.frame += 1
 
