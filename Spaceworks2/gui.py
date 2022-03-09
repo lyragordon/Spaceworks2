@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         # window settings
         self.setWindowTitle("Spaceworks2")
         self.setWindowIcon(self.style().standardIcon(
-            getattr(QStyle, 'SP_CommandLink')))
+            getattr(QStyle, 'SP_ComputerIcon')))
         self.resize(500, 500)
         self.serial = None
         # prompt for serial config
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         while self.serial.inWaiting() == 0:
             time.sleep(1)
             if time.time() > timeout:
-                self.update_terminal("<b>REQUEST TIMEOUT</b>")
+                self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
                 return
         #raw_data = self.serial.readline()
         # TODO validate data frame
@@ -99,7 +99,8 @@ class MainWindow(QMainWindow):
 
     def serial_connection_lost(self):
         """Notifies user that serial connection has been lost."""
-        self.update_terminal("<b>Serial connnection lost!</b>")
+        self.update_terminal(
+            "<br><center><b>Serial connnection lost!</b></center><br>")
         self.evt_serial_connection_error()
 
     def init_serial(self, port: str, baudrate: str):
@@ -122,6 +123,9 @@ class MainWindow(QMainWindow):
         self.terminal_thread.finished.connect(self.terminal_thread.deleteLater)
         self.terminal_worker.progress.connect(self.update_terminal)
         self.terminal_thread.start()
+
+        self.update_terminal(
+            "<center><b>Serial connection initiated.</b></center><br>")
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if self.serial:
@@ -155,7 +159,7 @@ class MainWindow(QMainWindow):
                 if time.process_time() > timeout:
                     self.btn_request_frame.setEnabled(False)
                     self.update_terminal(
-                        "<b>Serial device not responding (PING TIMEOUT)</b>")
+                        "<br><center><b>Serial device not responding (PING TIMEOUT)</b></center><br>")
                     return
             # Read as many lines as are available, one of which may be the 'pong'
             raw_lines = self.serial.readlines()
