@@ -55,5 +55,6 @@ def init_run(run: int) -> Path:
     return run_dir
 
 
-def remove_run_dir(dir: Path):
-    os.rmdir(dir)
+def remove_run_dir(run: int):
+    run_dir = DATA_DIR / f"run_{run}"
+    os.rmdir(run_dir)

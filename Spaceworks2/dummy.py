@@ -40,14 +40,14 @@ class DummySerial:
             if self.mode == LINEAR:
                 text = str([float('{:.2f}'.format(
                     float(SPAN*i/NUM_VALS)+RANGE[0])) for i in range(NUM_VALS)])[1:-1]
-            elif self.mode == RANDOM:
+            elif self.mode == RANDOM or self.mode == SAMPLE:
                 lst = []
                 for i in range(NUM_VALS):
                     lst.append('{:.2f}'.format(
                         numpy.random.randint(RANGE[0]*10, RANGE[1]*10)*0.1))
                 text = ", ".join(lst)
-            elif self.mode == SAMPLE:
-                raise ArgumentError("i dont have any sample data yet lol")
+            # elif self.mode == SAMPLE:
+            # TODO implement sample data
             else:
                 raise ArgumentError("invalid mode")
 

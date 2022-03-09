@@ -41,7 +41,7 @@ class MplCanvas(FigureCanvasQTAgg):
         super().__init__(self.fig)
 
 
-class ImageWindow(QMainWindow):
+class ImageWindowMpl(QMainWindow):
     """QDialog containing canvas widget"""
 
     def __init__(self, data: np.ndarray, run: int, frame: int, parent=None):
@@ -136,7 +136,9 @@ class MainWindow(QMainWindow):
                 "<center><b>DATAFRAME FORMAT ERROR</b></center>")
             return
         # TODO validate data frame (tho i sorta solved it with the try/except)
-        self.image_dialog = ImageWindow(array, self.run, self.frame, self)
+
+        self.image_dialog = ImageWindowMpl(
+            array, self.run, self.frame, self)
         self.frame += 1
 
     def serial_connection_lost(self):
@@ -172,7 +174,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         # if no files were generated, delete the run directory
         if list(self.run_dir.glob('*')) == []:
-            comm.remove_run_dir(self.run_dir)
+            comm.remove_run_dir(self.run)
         if self.serial:
             reply = QMessageBox.question(
                 self, "Exit?", "A serial connection is active.\nDo you really want to exit?", QMessageBox.Yes, QMessageBox.No)
