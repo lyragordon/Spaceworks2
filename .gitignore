@@ -3,3 +3,4 @@ env/
 Pipfile.lock
 .DS_Store
 .vscode/
+data/run_*

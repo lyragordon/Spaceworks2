@@ -1,0 +1,1 @@
+This is where run folders are generated and image data is saved.
