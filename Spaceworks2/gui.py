@@ -48,7 +48,16 @@ class PgImageWindow(QMainWindow):
         self.main_widget.setLayout(self.layout)
         self.setCentralWidget(self.main_widget)
         self.resize(1200, 800)
+        self.center()
         self.show()
+
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
 
 
 class MainWindow(QMainWindow):
@@ -96,7 +105,7 @@ class MainWindow(QMainWindow):
         self.window.show()
         # window settings
         self.setCentralWidget(self.window)
-
+        self.center()
         self.show()
 
     def update_terminal(self, line: str):
@@ -217,6 +226,14 @@ class MainWindow(QMainWindow):
         else:
             return
 
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
+
 
 class SerialSetup(QDialog):
     """Serial port setup dialog."""
@@ -260,6 +277,7 @@ class SerialSetup(QDialog):
         self.setLayout(self.horiz_layout)
         # window settings
         self.resize(self.sizeHint())
+        self.center()
         self.show()
         self.setEnabled(True)
 
@@ -313,3 +331,11 @@ class SerialSetup(QDialog):
         if not self.parent.serial:
             self.parent.close()
         return super().closeEvent(a0)
+
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
