@@ -26,14 +26,17 @@ class PgImageWindow(QMainWindow):
 
         self.imageItem = pg.ImageItem()
         self.imageItem.setImage(np.transpose(self.data), autoLevels=True)
+        self.imageItem.setAutoDownsample(True)
         nRows, nCols = data.shape
-        self.plotItem.setRange(xRange=[0, nCols], yRange=[0, nRows])
+        self.plotItem.setRange(xRange=[-10, nCols+10], yRange=[0, nRows])
 
         self.imageItem.setColorMap(pg.colormap.getFromMatplotlib('plasma'))
         self.plotItem.addItem(self.imageItem)
 
         self.crosshair = pg.TargetItem(
-            pos=[16, 12], movable=True, size=50, label=self.get_label_at_pos, labelOpts={'offset': (20, 20), 'color': 'k', 'fill': pg.mkBrush((255, 255, 255, 127))}, pen=pg.mkPen(color='k', width=3))
+            pos=[16, 12], movable=True, size=50, label=self.get_label_at_pos, labelOpts={'offset': (40, -40), 'color': 'k', 'fill': pg.mkBrush((255, 255, 255, 127))}, pen=pg.mkPen(color='k', width=3))
+
+        self.crosshair.setPos(self.get_max_pos(self.data))
         self.plotItem.addItem(self.crosshair)
 
         self.colorLegendItem = ColorLegendItem(
@@ -43,7 +46,6 @@ class PgImageWindow(QMainWindow):
         self.colorLegendItem.setMinimumHeight(60)
         self.colorLegendItem.autoScaleFromImage()
         # TODO save frame as png and csv at data/run_N/frame_N.png & frame_N.csv
-        # TODO add min/max crosshairs and readouts
         self.graphicsWidget = pg.GraphicsLayoutWidget()
         self.graphicsWidget.addItem(self.plotItem, 0, 0)
         self.graphicsWidget.addItem(self.colorLegendItem, 0, 1)
@@ -68,7 +70,14 @@ class PgImageWindow(QMainWindow):
     def get_label_at_pos(self, x_flt, y_flt) -> str:
         x = int(x_flt)
         y = int(y_flt)
-        return f"{self.data[x][y]} °C"
+        return f"{x},{y}\n{self.data[y][x]} °C"
+
+    def get_max_pos(self, data: np.ndarray) -> Tuple:
+        print(max_index := data.argmax())
+        y = int(max_index/32)
+        x = ((max_index) % 32)
+        print((x, y))
+        return x+0.5, y+0.5
 
 
 class MainWindow(QMainWindow):
