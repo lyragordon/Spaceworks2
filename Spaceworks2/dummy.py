@@ -52,7 +52,9 @@ class DummySerial:
                 raise ArgumentError("invalid mode")
 
             self.requested = False
-            return bytes(text, encoding='utf-8')
+            data_frame = comm.DF_START_SEQ + \
+                bytes(text, encoding='utf-8') + comm.DF_END_SEQ
+            return data_frame
         elif self.pinged:
             self.pinged = False
             return comm.PING_RESPONSE

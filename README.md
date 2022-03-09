@@ -5,7 +5,7 @@ A GUI Python program for a spring 2022 SES407 project.
 2. Ensure git is installed
 3. Ensure venv is installed
 
-    	pip install virtualenv
+		pip install virtualenv
 4. Open a terminal window where you want to download the Application
 5. Clone the repository
 

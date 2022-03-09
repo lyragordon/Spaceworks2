@@ -1,13 +1,18 @@
+import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from PyQt5 import QtCore
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, QTimer
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import *
+from PyQt5 import QtGui
+from serial import Serial
 import sys
 import comm
 import time
 import dummy
-from serial import Serial
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, QTimer
-from PyQt5 import QtCore
+import matplotlib
+matplotlib.use('Qt5Agg')
 
 
 class TerminalWorker(QObject):
@@ -27,13 +32,40 @@ class TerminalWorker(QObject):
         self.finished.emit()
 
 
+class MplCanvas(FigureCanvasQTAgg):
+    """Canvas Widget containing a matplotlib Figure"""
+
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = self.fig.add_subplot(111)
+        super().__init__(self.fig)
+
+
+class ImageWindow(QMainWindow):
+    """QDialog containing canvas widget"""
+
+    def __init__(self, data: np.ndarray, run: int, frame: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"Run {run} - Frame {frame}")
+        self.canvas = MplCanvas(self)
+        #NOTE make sure higher number is red and lower is blue
+        self.canvas.axes.imshow(data, interpolation="none", cmap="viridis")
+        self.setCentralWidget(self.canvas)
+        self.show()
+        # TODO save frame as png and csv at data/run_N/frame_N.png & frame_N.csv
+        
+
+
 class MainWindow(QMainWindow):
     """Main window dialog."""
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         # window settings
-        self.setWindowTitle("Spaceworks2")
+        self.run = comm.get_run()
+        self.run_dir = comm.init_run(self.run)
+        self.frame = 1
+        self.setWindowTitle(f"Run {self.run}")
         self.setWindowIcon(self.style().standardIcon(
             getattr(QStyle, 'SP_ComputerIcon')))
         self.resize(500, 500)
@@ -46,7 +78,7 @@ class MainWindow(QMainWindow):
         self.btn_request_frame.clicked.connect(self.evt_request_frame)
         self.btn_request_frame.setEnabled(False)
         self.ping_timer = QTimer()
-        self.ping_timer.setInterval(comm.PING_INTERVAL)
+        self.ping_timer.setInterval(comm.PING_INTERVAL * 1000)
         self.ping_timer.timeout.connect(self.ping_serial)
         self.ping_timer.start()
         # Reset button
@@ -93,9 +125,16 @@ class MainWindow(QMainWindow):
             if time.time() > timeout:
                 self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
                 return
-        #raw_data = self.serial.readline()
-        # TODO validate data frame
-        # TODO new dialog that displays heatmap
+        raw_data = self.serial.readline().decode('utf-8')
+        try:
+            array = comm.process_data(raw_data)
+        except:
+            self.update_terminal(
+                "<center><b>DATAFRAME FORMAT ERROR</b></center>")
+            return
+        # TODO validate data frame (tho i sorta solved it with the try/except)
+        self.image_dialog = ImageWindow(array, self.run, self.frame, self)
+        self.frame += 1
 
     def serial_connection_lost(self):
         """Notifies user that serial connection has been lost."""
