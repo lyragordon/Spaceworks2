@@ -1,3 +1,4 @@
+import pyqtgraph.exporters
 import pyqtgraph as pg
 import numpy as np
 from PyQt5 import QtCore
@@ -11,14 +12,17 @@ import dummy
 import matplotlib
 from pgcolorbar.colorlegend import ColorLegendItem
 from typing import Tuple
+from pathlib import Path
 matplotlib.use('Qt5Agg')
 
 
 class PgImageWindow(QMainWindow):
-    def __init__(self, data: np.ndarray, run: int, frame: int, parent=None):
+    def __init__(self, data: np.ndarray, run: int, frame: int, run_dir: Path, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Run {run} - Frame {frame}")
         self.data = data
+        self.run_dir = run_dir
+        self.frame = frame
         self.plotItem = pg.PlotItem()
         self.viewBox = self.plotItem.getViewBox()
         # viewBox.disableAutoRange(pg.ViewBox.XYAxes)
@@ -45,7 +49,6 @@ class PgImageWindow(QMainWindow):
             label='Temperature (°C)')
         self.colorLegendItem.setMinimumHeight(60)
         self.colorLegendItem.autoScaleFromImage()
-        # TODO save frame as png and csv at data/run_N/frame_N.png & frame_N.csv
         self.graphicsWidget = pg.GraphicsLayoutWidget()
         self.graphicsWidget.addItem(self.plotItem, 0, 0)
         self.graphicsWidget.addItem(self.colorLegendItem, 0, 1)
@@ -54,7 +57,8 @@ class PgImageWindow(QMainWindow):
         self.layout.addWidget(self.graphicsWidget)
         self.main_widget.setLayout(self.layout)
         self.setCentralWidget(self.main_widget)
-
+        self.save_img()
+        # TODO save csv
         self.resize(1200, 800)
         self.center()
         self.show()
@@ -77,6 +81,12 @@ class PgImageWindow(QMainWindow):
         y = int(max_index/32)
         x = ((max_index) % 32)
         return x+0.5, y+0.5
+
+    def save_img(self):
+        exporter = pyqtgraph.exporters.ImageExporter(
+            self.graphicsWidget.scene())
+        exporter.export(
+            str((self.run_dir / f"frame_{self.frame}.png").resolve()))
 
 
 class MainWindow(QMainWindow):
@@ -161,7 +171,7 @@ class MainWindow(QMainWindow):
         # TODO validate data frame (tho i sorta solved it with the try/except)
 
         self.image_dialog = PgImageWindow(
-            array, self.run, self.frame, self)
+            array, self.run, self.frame, self.run_dir, self)
         self.frame += 1
 
     def serial_connection_lost(self):
