@@ -35,7 +35,7 @@ class TerminalWorker(QObject):
 class MplCanvas(FigureCanvasQTAgg):
     """Canvas Widget containing a matplotlib Figure"""
 
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=10, height=8, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
         super().__init__(self.fig)
@@ -49,12 +49,14 @@ class ImageWindow(QMainWindow):
         self.setWindowTitle(f"Run {run} - Frame {frame}")
         self.canvas = MplCanvas(self)
         self.heatmap = self.canvas.axes.imshow(
-            data, interpolation="none", cmap="jet")
+            data, interpolation="bilinear", cmap="plasma")
         self.colorbar = self.canvas.fig.colorbar(self.heatmap)
         self.colorbar.minorticks_on()
         self.setCentralWidget(self.canvas)
         self.show()
         # TODO save frame as png and csv at data/run_N/frame_N.png & frame_N.csv
+        # TODO add min/max crosshairs and readouts
+        # TODO optimization? runs slow
 
 
 class MainWindow(QMainWindow):
