@@ -19,7 +19,7 @@ DF_END_SEQ = ']'.encode('utf-8')
 DATA_FORMAT = (24, 32)
 
 PWD = Path().cwd()
-DATA_DIR = (PWD / "data").resolve()
+DATA_DIR = PWD
 
 
 def list_serial_ports() -> list[str]:
