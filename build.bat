@@ -1,0 +1,1 @@
+start env/Scripts/pyinstaller -F --clean --paths .\Spaceworks2\  --paths .\Spaceworks2\pgcolorbar .\Spaceworks2\Spaceworks2.py
