@@ -185,12 +185,14 @@ class MainWindow(QMainWindow):
         # Open Image Window
         self.image_dialog = PgImageWindow(
             array, self.run, self.frame, self.run_dir, self)
+        self.update_terminal(
+            f"<center><b>Frame {self.frame} received</b></center>")
         self.frame += 1
 
     def serial_connection_lost(self):
         """Notifies user that serial connection has been lost."""
         self.update_terminal(
-            "<br><center><b>Serial connnection lost!</b></center><br>")
+            "<center><b>Serial connnection lost!</b></center>")
         self.evt_serial_connection_error()
 
     def init_serial(self, port: str, baudrate: str):
@@ -206,7 +208,7 @@ class MainWindow(QMainWindow):
                 return
 
         self.update_terminal(
-            "<center><b>Serial connection initiated.</b></center><br>")
+            "<center><b>Serial connection initiated.</b></center>")
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Prompt for close if serial active. Delete run directory if no images were saved"""
@@ -242,7 +244,7 @@ class MainWindow(QMainWindow):
                 if time.process_time() > timeout:
                     self.btn_request_frame.setEnabled(False)
                     self.update_terminal(
-                        "<br><center><b>Serial device not responding (PING TIMEOUT)</b></center><br>")
+                        "<center><b>Serial device not responding (PING TIMEOUT)</b></center>")
                     return
             # Read as many lines as are available, one of which may be the 'pong'
             raw_lines = self.serial.readlines()
