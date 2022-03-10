@@ -13,57 +13,63 @@ import matplotlib
 from pgcolorbar.colorlegend import ColorLegendItem
 from typing import Tuple
 from pathlib import Path
-matplotlib.use('Qt5Agg')
 
 
 class PgImageWindow(QMainWindow):
+    """Image dialog containing pyqtgraph heatmap"""
+
     def __init__(self, data: np.ndarray, run: int, frame: int, run_dir: Path, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Run {run} - Frame {frame}")
+        # variables
         self.data = data
         self.run_dir = run_dir
         self.frame = frame
+        # Plot and ViewBox
         self.plotItem = pg.PlotItem()
         self.viewBox = self.plotItem.getViewBox()
-        # viewBox.disableAutoRange(pg.ViewBox.XYAxes)
         self.viewBox.setAspectLocked(True)
-
+        # Heatmap ImageItem
         self.imageItem = pg.ImageItem()
         self.imageItem.setImage(np.transpose(self.data), autoLevels=True)
         self.imageItem.setAutoDownsample(True)
+        # Default scaling of heatmap
         nRows, nCols = data.shape
         self.plotItem.setRange(xRange=[-5, nCols+5], yRange=[0, nRows])
-
+        # Set colormap
         self.imageItem.setColorMap(pg.colormap.getFromMatplotlib('plasma'))
         self.plotItem.addItem(self.imageItem)
-
+        # Generate crosshair at hottest pixel
         self.crosshair = pg.TargetItem(
             pos=[16, 12], movable=True, size=50, label=self.get_label_at_pos, labelOpts={'offset': (40, -40), 'color': 'k', 'fill': pg.mkBrush((255, 255, 255, 127))}, pen=pg.mkPen(color='k', width=3))
-
         self.crosshair.setPos(self.get_max_pos(self.data))
         self.plotItem.addItem(self.crosshair)
-
+        # Generate colorbar
         self.colorLegendItem = ColorLegendItem(
             imageItem=self.imageItem,
             showHistogram=True,
             label='Temperature (°C)')
         self.colorLegendItem.setMinimumHeight(60)
         self.colorLegendItem.autoScaleFromImage()
+        # Graphics Layout
         self.graphicsWidget = pg.GraphicsLayoutWidget()
         self.graphicsWidget.addItem(self.plotItem, 0, 0)
         self.graphicsWidget.addItem(self.colorLegendItem, 0, 1)
-        self.main_widget = QWidget()
+        # Window layout
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.graphicsWidget)
+        # Window settings
+        self.main_widget = QWidget()
         self.main_widget.setLayout(self.layout)
         self.setCentralWidget(self.main_widget)
-        self.save_img()
-        # TODO save csv
+        self.setWindowTitle(f"Run {run} - Frame {frame}")
         self.resize(1200, 800)
         self.center()
+        self.save_img()
+        self.save_csv()
         self.show()
 
     def center(self):
+        """Centers the window in the active monitor"""
         frameGm = self.frameGeometry()
         screen = QApplication.desktop().screenNumber(
             QApplication.desktop().cursor().pos())
@@ -72,21 +78,30 @@ class PgImageWindow(QMainWindow):
         self.move(frameGm.topLeft())
 
     def get_label_at_pos(self, x_flt, y_flt) -> str:
+        """Generates a label for the crosshairs at a specific point"""
         x = int(x_flt)
         y = int(y_flt)
         return f"{x},{y}\n{self.data[y][x]} °C"
 
     def get_max_pos(self, data: np.ndarray) -> Tuple:
+        """Returns the position of the center of the hottest pixel"""
         max_index = data.argmax()
         y = int(max_index/32)
         x = ((max_index) % 32)
         return x+0.5, y+0.5
 
     def save_img(self):
+        """Saves the heatmap as a png to the current run directory"""
         exporter = pyqtgraph.exporters.ImageExporter(
             self.graphicsWidget.scene())
         exporter.export(
             str((self.run_dir / f"frame_{self.frame}.png").resolve()))
+
+    def save_csv(self):
+        """Saves the data array as a csv."""
+        with open(self.run_dir / f"frame_{self.frame}.csv", 'w') as file:
+            for y in self.data:
+                file.write(",".join([str(x) for x in y]) + ';\n')
 
 
 class MainWindow(QMainWindow):
@@ -106,7 +121,7 @@ class MainWindow(QMainWindow):
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
         # Request button that's only active when ping is reciprocated
-        self.btn_request_frame = QPushButton("Request", self)
+        self.btn_request_frame = QPushButton("Request Frame", self)
         self.btn_request_frame.resize(self.btn_request_frame.sizeHint())
         self.btn_request_frame.clicked.connect(self.evt_request_frame)
         self.btn_request_frame.setEnabled(False)
@@ -115,7 +130,7 @@ class MainWindow(QMainWindow):
         self.ping_timer.timeout.connect(self.ping_serial)
         self.ping_timer.start()
         # Reset button
-        self.btn_reset_serial = QPushButton("Reset", self)
+        self.btn_reset_serial = QPushButton("Reset Device", self)
         self.btn_reset_serial.resize(self.btn_reset_serial.sizeHint())
         self.btn_reset_serial.clicked.connect(self.evt_reset_serial)
         # Terminal display
@@ -139,7 +154,6 @@ class MainWindow(QMainWindow):
 
     def update_terminal(self, line: str):
         """Adds a line to the terminal display."""
-        # TODO also write each line to a logfile in ../data/run_x
         self.terminal.append(line)
         self.terminal.resize(self.terminal.sizeHint())
         self.vert_layout.update()
@@ -168,8 +182,7 @@ class MainWindow(QMainWindow):
             self.update_terminal(
                 "<center><b>DATAFRAME FORMAT ERROR</b></center>")
             return
-        # TODO validate data frame (tho i sorta solved it with the try/except)
-
+        # Open Image Window
         self.image_dialog = PgImageWindow(
             array, self.run, self.frame, self.run_dir, self)
         self.frame += 1
@@ -181,7 +194,7 @@ class MainWindow(QMainWindow):
         self.evt_serial_connection_error()
 
     def init_serial(self, port: str, baudrate: str):
-        """Initializes the serial connection and the terminal updater thread."""
+        """Initializes the serial connection."""
         if port == "Dummy":
             self.serial = dummy.DummySerial(
                 dummy.get_mode_from_str(baudrate))
@@ -196,7 +209,7 @@ class MainWindow(QMainWindow):
             "<center><b>Serial connection initiated.</b></center><br>")
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        # if no files were generated, delete the run directory
+        """Prompt for close if serial active. Delete run directory if no images were saved"""
         if list(self.run_dir.glob('*')) == []:
             comm.remove_run_dir(self.run)
         if self.serial:
@@ -211,6 +224,7 @@ class MainWindow(QMainWindow):
             event.accept()
 
     def evt_serial_connection_error(self):
+        """Display error if serial connection dropped. Prompts for Serial setup"""
         self.serial = None
         error = QMessageBox.critical(
             self, "Serial Error", "The serial connection has encountered an error.")
@@ -249,6 +263,7 @@ class MainWindow(QMainWindow):
             self.btn_request_frame.setEnabled(False)
 
     def update_serial(self):
+        """Checks if available serial data and pushes to terminal display"""
         if self.serial and self.serial.inWaiting() > 0:
             line = self.serial.readline().decode('utf-8')
             self.update_terminal(line)
@@ -256,6 +271,7 @@ class MainWindow(QMainWindow):
             return
 
     def center(self):
+        """Centers the window in the active monitor"""
         frameGm = self.frameGeometry()
         screen = QApplication.desktop().screenNumber(
             QApplication.desktop().cursor().pos())
@@ -357,11 +373,13 @@ class SerialSetup(QDialog):
             self.cbb_Baudrate.setCurrentText(saved_selection)
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        """Closes main window if setup not completed"""
         if not self.parent.serial:
             self.parent.close()
         return super().closeEvent(a0)
 
     def center(self):
+        """Centers the window in the active monitor"""
         frameGm = self.frameGeometry()
         screen = QApplication.desktop().screenNumber(
             QApplication.desktop().cursor().pos())
