@@ -3,23 +3,27 @@ A GUI Python program for a spring 2022 SES407 project. Interfaces with a ItsyBit
 
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Running the app](#running-the-app)
 - [Gallery](#gallery)
 - [Acknowledgements](#acknowledgements)
 # Requirements
  - Python 3
  - Git
 # Installation
-1. Clone the repository
+1. Download the [latest binary](https://github.com/lyragordon/Spaceworks2_Python/releases/tag/v0.1)
+   
+2. Build from source
+   1. Clone the repository
 
-		git clone https://github.com/lyragordon/Spaceworks2_Python.git
-2. Install requirements
+		```git clone https://github.com/lyragordon/Spaceworks2_Python.git```
 
-		pip install -r requirements.txt
+   2. Install requirements
 
-# Running the app
+   		```pip install -r requirements.txt```
+		
+	3. Run script
+	
+		```python3 Spaceworks2_Python/Spaceworks2/run.py```
 
-		python3 Spaceworks2/run.py
 # Gallery
 
 ![Image Window](https://github.com/lyragordon/Spaceworks2_Python/blob/resources/gallery/ImageWindow.png?raw=true)
