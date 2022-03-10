@@ -20,7 +20,7 @@ B. Build from source
 
 2. Install requirements
 
-	```pip install -r requirements.txt```
+	```pip install -r Spaceworks2_Python/requirements.txt```
 		
 3. Run script
 	
