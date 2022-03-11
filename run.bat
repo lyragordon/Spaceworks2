@@ -1,2 +1,2 @@
 @echo off
-start pythonw ./Spaceworks2/run.py
+start pythonw %0\..\Spaceworks2\run.py
