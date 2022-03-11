@@ -16,6 +16,7 @@ PING_INTERVAL = 2  # seconds
 DF_START_SEQ = '['.encode('utf-8')
 DF_END_SEQ = ']'.encode('utf-8')
 
+
 DATA_FORMAT = (24, 32)
 
 SCRIPT_DIR = Path(__file__)
@@ -33,27 +34,32 @@ def list_serial_ports() -> list[str]:
 
 
 def list_baudrates() -> list[str]:
-    return ["9600", "115200"]
+    """Lists baudrates to be used for serial communication."""
+    return ["9600", "19200", "28800", "38400", "57600", "76800", "115200"]
 
 
 def process_data(raw: str) -> np.ndarray:
+    """Converts raw string of image data to a 2d array"""
     vector = np.array([float(i) for i in raw[1:-1].split(',')])
     array = np.reshape(vector, DATA_FORMAT)
     return array
 
 
 def get_run() -> int:
+    """Checks which run folders exist and generates the next run number"""
     runs = [int(re.search("\d+", str(path.stem)).group())
             for path in DATA_DIR.glob('run_*')]
     return max(runs)+1 if runs != [] else 1
 
 
 def init_run(run: int) -> Path:
+    """generates a run folder"""
     run_dir = DATA_DIR / f"run_{run}"
     run_dir.mkdir(parents=True)
     return run_dir
 
 
 def remove_run_dir(run: int):
+    """removes a run folder"""
     run_dir = DATA_DIR / f"run_{run}"
     os.rmdir(run_dir)
