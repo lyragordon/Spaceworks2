@@ -325,6 +325,7 @@ class SerialSetup(QDialog):
         # window settings
         self.resize(self.sizeHint())
         self.center()
+        self.setFixedSize(self.size())
         self.show()
         self.setEnabled(True)
 
