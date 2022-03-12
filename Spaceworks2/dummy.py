@@ -1,6 +1,6 @@
 from argparse import ArgumentError
 import numpy
-
+import re
 import comm
 
 
@@ -48,23 +48,10 @@ class DummySerial:
                 text = ", ".join(lst)
             elif self.mode == SAMPLE:
                 lst = []
-                x = 0
-                y = 0
-                for i in range(NUM_VALS):
-                    # dont look at this mess
-                    def blah_x(xx):
-                        return xx-18 if xx-18 != 0 else 1
-
-                    def blay_y(yy):
-                        return yy-12 if yy-12 != 0 else 1
-
-                    lst.append('{:.2f}'.format(
-                        (1/abs(blah_x(x)*blay_y(y)))*numpy.random.randint(RANGE[0]*10, RANGE[1]*10)*0.1))
-
-                    x += 1
-                    if x > 31:
-                        x = 0
-                        y += 1
+                with open(comm.DATA_DIR/"SAMPLE_DATA.csv", 'r') as file:
+                    for line in file.readlines():
+                        for item in re.split(',', line):
+                            lst.append(item)
 
                 text = ", ".join(lst)
             else:
