@@ -43,7 +43,7 @@ def process_data(raw: str) -> np.ndarray:
     vector = np.array([float(i) for i in raw[len(DF_START_SEQ.decode(
         'utf-8')):-1*len(DF_END_SEQ.decode('utf-8'))].split(',')])
     array = np.reshape(vector, DATA_FORMAT)
-    return array
+    return np.rot90(array,k=2)
 
 
 def get_run() -> int:
