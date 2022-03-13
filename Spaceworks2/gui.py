@@ -364,12 +364,12 @@ class SerialSetup(QDialog):
         saved_selection = self.cbb_Baudrate.currentText()
         if self.cbb_SerialPort.currentText() == "Dummy":
             self.cbb_Baudrate.clear()
-            new_options = ["Choose a dummy mode...   "] + \
+            new_options = ["Choose a dummy mode...             "] + \
                 dummy.get_modes()
             self.cbb_Baudrate.addItems(new_options)
         else:
             self.cbb_Baudrate.clear()
-            new_options = ["Choose a baudrate...            "] + \
+            new_options = ["Choose a baudrate...                      "] + \
                 comm.list_baudrates()
             self.cbb_Baudrate.addItems(new_options)
         if saved_selection in new_options:
