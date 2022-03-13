@@ -25,7 +25,7 @@ DATA_DIR = (SCRIPT_DIR.parent.parent / "data").resolve()
 
 def list_serial_ports() -> list[str]:
     """Returns a list of available serial ports"""
-    ports = ["Dummy"]
+    ports = ["Dummy2"]
     comports = list_ports.comports()
     if comports:
         for port in comports:
