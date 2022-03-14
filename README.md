@@ -2,7 +2,7 @@
 
 A GUI Python program for a spring 2022 SES407 project. Interfaces with a ItsyBitsy M4 with an MLX90640 IR thermal camera.
 
----
+&nbsp;
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -11,14 +11,14 @@ A GUI Python program for a spring 2022 SES407 project. Interfaces with a ItsyBit
 3. [Gallery](#gallery)
 4. [Acknowledgements](#acknowledgements)
 
----
+&nbsp;
 
 ## Requirements
 
 - Python 3
 - Git
 
----
+&nbsp;
 
 ## Installation
 
@@ -38,7 +38,7 @@ B. Build from source
 
         python3 Spaceworks2_Python/Spaceworks2/run.py
 
----
+&nbsp;
 
 ## Gallery
 
@@ -48,7 +48,7 @@ B. Build from source
 
 ![Initialization](https://github.com/lyragordon/Spaceworks2_Python/blob/resources/gallery/Initialization.png?raw=true)
 
----
+&nbsp;
 
 ## Acknowledgements
 
