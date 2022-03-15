@@ -75,10 +75,13 @@ class DummySerial:
         return True if self.requested or self.pinged else False
 
     def write(self, cmd: bytes):
-        if cmd == comm.REQUEST_COMMAND:
+        if cmd == comm.REQUEST_COMMAND + comm.CMD_END_SEQUENCE:
             self.requested = True
-        elif cmd == comm.PING_COMMAND:
+        elif cmd == comm.PING_COMMAND + comm.CMD_END_SEQUENCE:
             self.pinged = True
+
+    def flush(self):
+        return
 
 
 def get_modes() -> list[str]:

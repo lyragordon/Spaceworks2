@@ -168,14 +168,20 @@ class MainWindow(QMainWindow):
 
     def evt_request_frame(self):
         """Requests a data frame over serial and displays it."""
-        self.serial.write(comm.REQUEST_COMMAND)
+        self.serial.write(comm.REQUEST_COMMAND + comm.CMD_END_SEQUENCE)
+        self.serial.flush()
         timeout = time.time() + comm.REQUEST_TIMEOUT
         while self.serial.inWaiting() == 0:
             time.sleep(1)
             if time.time() > timeout:
                 self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
                 return
-        raw_data = self.serial.readline().decode('utf-8')
+        raw_line = self.serial.readline()[:-1]
+        # wait until dataframe is read. There might e
+        while raw_line == comm.PING_RESPONSE or raw_line == ''.encode('utf-8'):
+            raw_line = self.serial.readline()[:-1]
+
+        raw_data = raw_line[1:-1].decode()
         try:
             array = comm.process_data(raw_data)
         except:
@@ -237,7 +243,8 @@ class MainWindow(QMainWindow):
         # This one's a bit of a doozy so I'll comment it fully
         if self.serial and self.serial.isOpen():
             # Send 'ping'
-            self.serial.write(comm.PING_COMMAND)
+            self.serial.write(comm.PING_COMMAND + comm.CMD_END_SEQUENCE)
+            self.serial.flush()
             # Wait for a response (this should probably be done in a QThread.... whatever im not quite sure how to do it)
             timeout = time.process_time() + comm.PING_TIMEOUT
             while self.serial.inWaiting() == 0:
@@ -247,28 +254,22 @@ class MainWindow(QMainWindow):
                         "<center><b>Serial device not responding (PING TIMEOUT)</b></center>")
                     return
             # Read as many lines as are available, one of which may be the 'pong'
-            raw_lines = self.serial.readlines()
+            raw_line = self.serial.readline()[:-1]
             # If the 'pong' is in those lines, enable the button and pass the rest of the lines to the terminal
-            if comm.PING_RESPONSE in raw_lines:
+            if comm.PING_RESPONSE == raw_line:
                 self.btn_request_frame.setEnabled(True)
-                if len(raw_lines) > 1:
-                    other_lines = raw_lines.pop(
-                        raw_lines.index(comm.PING_RESPONSE))
-                    for line in other_lines:
-                        self.update_terminal(line.decode('utf-8'))
             # If the 'pong' isnt in those lines, just pass them to the terminal and deactivate the button
             else:
                 self.btn_request_frame.setEnabled(False)
-                for line in raw_lines:
-                    self.update_terminal(line.decode('utf-8'))
         else:
             self.btn_request_frame.setEnabled(False)
 
     def update_serial(self):
         """Checks if available serial data and pushes to terminal display"""
         if self.serial and self.serial.inWaiting() > 0:
-            line = self.serial.readline().decode('utf-8')
-            self.update_terminal(line)
+            raw_line = self.serial.readline()[:-1]
+            if not raw_line == comm.PING_RESPONSE:
+                self.update_terminal(raw_line.decode('utf-8'))
         else:
             return
 
