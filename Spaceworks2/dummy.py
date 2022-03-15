@@ -63,7 +63,7 @@ class DummySerial:
             return data_frame
         elif self.pinged:
             self.pinged = False
-            return comm.PING_RESPONSE
+            return comm.CMD_START_SEQ + comm.PING_RESPONSE + comm.CMD_END_SEQ + '\n'.encode('utf-8')
 
     def readlines(self) -> list[bytes]:
         return [self.readline()]
@@ -75,9 +75,9 @@ class DummySerial:
         return True if self.requested or self.pinged else False
 
     def write(self, cmd: bytes):
-        if cmd == comm.REQUEST_COMMAND + comm.CMD_END_SEQUENCE:
+        if cmd == comm.REQUEST_COMMAND:
             self.requested = True
-        elif cmd == comm.PING_COMMAND + comm.CMD_END_SEQUENCE:
+        elif cmd == comm.PING_COMMAND:
             self.pinged = True
 
     def flush(self):

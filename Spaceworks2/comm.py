@@ -15,7 +15,9 @@ PING_INTERVAL = 5  # seconds
 
 DF_START_SEQ = '['.encode('utf-8')
 DF_END_SEQ = ']'.encode('utf-8')
-CMD_END_SEQUENCE = '?'.encode('utf-8')
+
+CMD_START_SEQ = '<'.encode('utf-8')
+CMD_END_SEQ = '>'.encode('utf-8')
 
 DATA_FORMAT = (24, 32)
 
