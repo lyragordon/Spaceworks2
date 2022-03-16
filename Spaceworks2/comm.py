@@ -8,14 +8,16 @@ import re
 REQUEST_COMMAND = 'r'.encode('utf-8')
 REQUEST_TIMEOUT = 5  # seconds
 
-PING_COMMAND = 'ping'.encode('utf-8')
-PING_RESPONSE = 'pong'.encode('utf-8')
-PING_TIMEOUT = 0.5  # seconds
-PING_INTERVAL = 2  # seconds
+PING_COMMAND = 'p'.encode('utf-8')
+PING_RESPONSE = 'o'.encode('utf-8')
+PING_TIMEOUT = 1  # seconds
+PING_INTERVAL = 5  # seconds
 
-DF_START_SEQ = '/['.encode('utf-8')
-DF_END_SEQ = ']/'.encode('utf-8')
+DF_START_SEQ = '['.encode('utf-8')
+DF_END_SEQ = ']'.encode('utf-8')
 
+CMD_START_SEQ = '<'.encode('utf-8')
+CMD_END_SEQ = '>'.encode('utf-8')
 
 DATA_FORMAT = (24, 32)
 
@@ -40,10 +42,9 @@ def list_baudrates() -> list[str]:
 
 def process_data(raw: str) -> np.ndarray:
     """Converts raw string of image data to a 2d array"""
-    vector = np.array([float(i) for i in raw[len(DF_START_SEQ.decode(
-        'utf-8')):-1*len(DF_END_SEQ.decode('utf-8'))].split(',')])
+    vector = np.array([float(i) for i in raw.split(',')])
     array = np.reshape(vector, DATA_FORMAT)
-    return np.rot90(array,k=2)
+    return np.rot90(array, k=2)
 
 
 def get_run() -> int:
