@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
         self.ping_timer.start()
         self.btn_burst = QPushButton("Request 5 Frames", self)
         self.btn_burst.resize(self.btn_burst.sizeHint())
-        self.btn_burst.clicked.connect(self.evt_burst)
+        self.btn_burst.clicked.connect(self.evt_btn_burst)
         self.btn_burst.setEnabled(False)
         # Terminal display
         self.terminal = QTextBrowser(self)
@@ -154,6 +154,48 @@ class MainWindow(QMainWindow):
         self.center()
         self.show()
 
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        """Prompt for close if serial active. Delete run directory if no images were saved"""
+        if list(self.run_dir.glob('*')) == []:
+            comm.remove_run_dir(self.run)
+        if self.serial:
+            reply = QMessageBox.question(
+                self, "Exit?", "A serial connection is active.\nDo you really want to exit?", QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                event.accept()
+                return super().closeEvent(event)
+            else:
+                event.ignore()
+        else:
+            event.accept()
+
+    def evt_btn_burst(self):
+        """Save 5 images without previewing"""
+        for i in range(5):
+            img_dialog = self.request_frame()
+            img_dialog.close()
+
+    def evt_btn_request(self):
+        "requests a frame and previews the image"
+        img_dialog = self.request_frame()
+        img_dialog.show()
+
+    def center(self):
+        """Centers the window in the active monitor"""
+        frameGm = self.frameGeometry()
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
+
+    def serial_command(self, cmd: bytes):
+        """send a serial command"""
+        self.serial.write(comm.CMD_START_SEQ)
+        self.serial.write(cmd)
+        self.serial.write(comm.CMD_END_SEQ)
+        self.serial.flush()
+
     def read_serial(self) -> bool:
         """checks serial port for data and loads it into appropriate buffer OR directs to terminal"""
 
@@ -161,7 +203,7 @@ class MainWindow(QMainWindow):
             try:
                 available = self.serial.inWaiting()
             except:
-                self.evt_serial_connection_error()
+                self.serial_connection_error()
                 available = False
             if(available):
                 # trim off trailing newline character
@@ -179,20 +221,11 @@ class MainWindow(QMainWindow):
         else:
             return False
 
-    def evt_burst(self):
-        for i in range(5):
-            img_dialog = self.request_frame()
-            img_dialog.close()
-
     def update_terminal(self, line: str):
         """Adds a line to the terminal display."""
         self.terminal.append(line)
         self.terminal.resize(self.terminal.sizeHint())
         self.vert_layout.update()
-
-    def evt_btn_request(self):
-        img_dialog = self.request_frame()
-        img_dialog.show()
 
     def request_frame(self) -> PgImageWindow:
         """Requests a data frame over serial and displays it."""
@@ -224,7 +257,7 @@ class MainWindow(QMainWindow):
         """Notifies user that serial connection has been lost."""
         self.update_terminal(
             "<center><b>Serial connnection lost!</b></center>")
-        self.evt_serial_connection_error()
+        self.serial_connection_error()
 
     def init_serial(self, port: str, baudrate: str):
         """Initializes the serial connection."""
@@ -235,28 +268,13 @@ class MainWindow(QMainWindow):
             try:
                 self.serial = Serial(port, baudrate=int(baudrate))
             except:
-                self.evt_serial_connection_error()
+                self.serial_connection_error()
                 return
 
         self.update_terminal(
             "<center><b>Serial connection initiated.</b></center>")
 
-    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        """Prompt for close if serial active. Delete run directory if no images were saved"""
-        if list(self.run_dir.glob('*')) == []:
-            comm.remove_run_dir(self.run)
-        if self.serial:
-            reply = QMessageBox.question(
-                self, "Exit?", "A serial connection is active.\nDo you really want to exit?", QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                event.accept()
-                return super().closeEvent(event)
-            else:
-                event.ignore()
-        else:
-            event.accept()
-
-    def evt_serial_connection_error(self):
+    def serial_connection_error(self):
         """Display error if serial connection dropped. Prompts for Serial setup"""
         self.serial = None
         error = QMessageBox.critical(
@@ -295,21 +313,6 @@ class MainWindow(QMainWindow):
         else:
             self.btn_request_frame.setEnabled(False)
             self.btn_burst.setEnabled(False)
-
-    def center(self):
-        """Centers the window in the active monitor"""
-        frameGm = self.frameGeometry()
-        screen = QApplication.desktop().screenNumber(
-            QApplication.desktop().cursor().pos())
-        centerPoint = QApplication.desktop().screenGeometry(screen).center()
-        frameGm.moveCenter(centerPoint)
-        self.move(frameGm.topLeft())
-
-    def serial_command(self, cmd: bytes):
-        self.serial.write(comm.CMD_START_SEQ)
-        self.serial.write(cmd)
-        self.serial.write(comm.CMD_END_SEQ)
-        self.serial.flush()
 
 
 class SerialSetup(QDialog):
