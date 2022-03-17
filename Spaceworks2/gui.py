@@ -162,6 +162,7 @@ class MainWindow(QMainWindow):
                 available = self.serial.inWaiting()
             except:
                 self.evt_serial_connection_error()
+                available = False
             if(available):
                 # trim off trailing newline character
                 raw_line = self.serial.readline()[:-1]
