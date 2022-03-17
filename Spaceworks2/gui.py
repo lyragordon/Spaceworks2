@@ -281,7 +281,6 @@ class MainWindow(QMainWindow):
             self, "Serial Error", "The serial connection has encountered an error.")
         self.btn_request_frame.setEnabled(False)
         self.btn_burst.setEnabled(False)
-        SerialSetup(self)
 
     def ping_serial(self):
         """Pings serial object and enables request button if it's active"""
