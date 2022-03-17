@@ -10,7 +10,7 @@ REQUEST_TIMEOUT = 5  # seconds
 
 PING_COMMAND = 'p'.encode('utf-8')
 PING_RESPONSE = 'o'.encode('utf-8')
-PING_TIMEOUT = 1  # seconds
+PING_TIMEOUT = 0.5  # seconds
 PING_INTERVAL = 5  # seconds
 
 DF_START_SEQ = '['.encode('utf-8')
@@ -65,3 +65,19 @@ def remove_run_dir(run: int):
     """removes a run folder"""
     run_dir = DATA_DIR / f"run_{run}"
     os.rmdir(run_dir)
+
+
+def is_command(raw: bytes) -> bool:
+    return True if raw[0] == int.from_bytes(CMD_START_SEQ, 'little') and raw[-1] == int.from_bytes(CMD_END_SEQ, 'little') else False
+
+
+def decode_command(raw: bytes) -> str:
+    return raw[1:-1].decode('utf-8')
+
+
+def is_dataframe(raw: bytes) -> bool:
+    return True if raw[0] == int.from_bytes(DF_START_SEQ, 'little') and raw[-1] == int.from_bytes(DF_END_SEQ, 'little') else False
+
+
+def decode_df(raw: bytes) -> str:
+    return raw[1:-1].decode('utf-8')
