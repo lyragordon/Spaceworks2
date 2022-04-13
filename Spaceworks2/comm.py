@@ -10,7 +10,7 @@ REQUEST_TIMEOUT = 5  # seconds
 
 PING_COMMAND = 'p'.encode('utf-8')
 PING_RESPONSE = 'o'.encode('utf-8')
-PING_TIMEOUT = 0.5  # seconds
+PING_TIMEOUT = 1  # seconds
 PING_INTERVAL = 5  # seconds
 
 DF_START_SEQ = '['.encode('utf-8')
