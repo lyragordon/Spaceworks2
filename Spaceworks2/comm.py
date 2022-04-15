@@ -6,7 +6,7 @@ import re
 
 
 REQUEST_COMMAND = 'r'.encode('utf-8')
-REQUEST_TIMEOUT = 5  # seconds
+REQUEST_TIMEOUT = 10  # seconds
 
 PING_COMMAND = 'p'.encode('utf-8')
 PING_RESPONSE = 'o'.encode('utf-8')
