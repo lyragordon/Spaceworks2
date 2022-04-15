@@ -6,11 +6,15 @@ import re
 
 
 REQUEST_COMMAND = 'r'.encode('utf-8')
+<<<<<<< HEAD
 REQUEST_TIMEOUT = 10  # seconds
+=======
+REQUEST_TIMEOUT = 30  # seconds
+>>>>>>> 30d31afd093b3b54fc6763886ff2b97225a4a242
 
 PING_COMMAND = 'p'.encode('utf-8')
 PING_RESPONSE = 'o'.encode('utf-8')
-PING_TIMEOUT = 0.5  # seconds
+PING_TIMEOUT = 2  # seconds
 PING_INTERVAL = 5  # seconds
 
 DF_START_SEQ = '['.encode('utf-8')
