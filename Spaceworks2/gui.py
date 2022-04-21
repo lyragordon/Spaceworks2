@@ -14,7 +14,6 @@ from pgcolorbar.colorlegend import ColorLegendItem
 from typing import Tuple
 from pathlib import Path
 
-
 class PgImageWindow(QMainWindow):
     """Image dialog containing pyqtgraph heatmap"""
 
@@ -66,7 +65,6 @@ class PgImageWindow(QMainWindow):
         self.center()
         self.save_img()
         self.save_csv()
-        self.show()
 
     def center(self):
         """Centers the window in the active monitor"""
@@ -118,31 +116,37 @@ class MainWindow(QMainWindow):
             getattr(QStyle, 'SP_ComputerIcon')))
         self.resize(500, 500)
         self.serial = None
+        self.command_buffer = []
+        self.data_buffer = []
+        self.c = float(1)
+        self.f = float(0)
+        self.t = float(0)
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
         # Request button that's only active when ping is reciprocated
         self.btn_request_frame = QPushButton("Request Frame", self)
         self.btn_request_frame.resize(self.btn_request_frame.sizeHint())
-        self.btn_request_frame.clicked.connect(self.evt_request_frame)
+        self.btn_request_frame.clicked.connect(self.evt_btn_request)
         self.btn_request_frame.setEnabled(False)
         self.ping_timer = QTimer()
         self.ping_timer.setInterval(comm.PING_INTERVAL * 1000)
         self.ping_timer.timeout.connect(self.ping_serial)
         self.ping_timer.start()
-        # Reset button
-        self.btn_reset_serial = QPushButton("Reset Device", self)
-        self.btn_reset_serial.resize(self.btn_reset_serial.sizeHint())
-        self.btn_reset_serial.clicked.connect(self.evt_reset_serial)
+        self.btn_cal = QPushButton("Thermistor Calibration", self)
+        self.btn_cal.resize(self.btn_cal.sizeHint())
+        self.btn_cal.clicked.connect(self.evt_cal)
+        self.btn_cal.setEnabled(False)
         # Terminal display
         self.terminal = QTextBrowser(self)
-        self.terminal_timer = QTimer()
-        self.ping_timer.setInterval(500)
-        self.ping_timer.timeout.connect(self.update_serial)
-        self.ping_timer.start()
+
+        self.serial_checker = QTimer()
+        self.serial_checker.setInterval(100)
+        self.serial_checker.timeout.connect(self.read_serial)
+        self.serial_checker.start()
         # Display widgets stacked vertically
         self.vert_layout = QVBoxLayout(self)
         self.vert_layout.addWidget(self.btn_request_frame)
-        self.vert_layout.addWidget(self.btn_reset_serial)
+        self.vert_layout.addWidget(self.btn_cal)
         self.vert_layout.addWidget(self.terminal)
         self.window = QWidget(self)
         self.window.setLayout(self.vert_layout)
@@ -152,42 +156,99 @@ class MainWindow(QMainWindow):
         self.center()
         self.show()
 
+    def read_serial(self) -> bool:
+        """checks serial port for data and loads it into appropriate buffer OR directs to terminal"""
+
+        if self.serial:
+            try:
+                available = self.serial.inWaiting()
+            except:
+                self.evt_serial_connection_error()
+            if(available):
+                # trim off trailing newline character
+                raw_line = self.serial.readline()[:-1]
+                print(raw_line)
+                if comm.is_command(raw_line):
+                    self.command_buffer.insert(0, comm.decode_command(raw_line))
+                elif comm.is_dataframe(raw_line):
+                    self.data_buffer.insert(0, comm.decode_df(raw_line))
+                elif comm.is_float(raw_line):
+                    print(raw_line)
+                    self.f = raw_line[1:-1].decode('utf-8')
+                else:
+                    self.update_terminal(raw_line.decode('utf-8'))
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def evt_cal(self):
+        print("Button Cal.")
+        timeout = time.time() + comm.REQUEST_TIMEOUT
+        self.t, enter = QInputDialog.getDouble(self, 'Target Value', 'Enter target value if known.', 25, -273.15, 273.15, 3)
+        print(enter)
+        if enter:
+            print("Enter.")
+            self.serial_command(comm.AVG_COMMAND)
+            print("CommAvg.")
+            while self.f == 0:
+                self.read_serial()
+                if time.time() > timeout:
+                    self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
+                    return
+            self.c = float(self.f) - self.t
+            self.f = float(0)
+            print("AvgReceived/Calculated.")
+        else:
+            print("No Enter.")
+            self.serial_command(comm.CAL_COMMAND)
+            print("CommCal.")
+            while self.f == 0:
+                self.read_serial()
+                if time.time() > timeout:
+                    self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
+                    return
+            self.c = float(self.f)
+            self.f =  float(0)
+            print("CalReceived.")
+        self.update_terminal(f"<center><b>Calibration Factor: {self.c} </b></center>")
+
     def update_terminal(self, line: str):
         """Adds a line to the terminal display."""
         self.terminal.append(line)
         self.terminal.resize(self.terminal.sizeHint())
         self.vert_layout.update()
 
-    def evt_reset_serial(self):
-        """Resets the serial port on a hardware level."""
-        if self.serial and not isinstance(self.serial, dummy.DummySerial):
-            self.serial.setDTR(False)
-            time.sleep(0.5)  # blocking, bad, i know
-            self.serial.setDTR(True)
-            time.sleep(0.5)
+    def evt_btn_request(self):
+        img_dialog = self.request_frame()
+        img_dialog.show()
 
-    def evt_request_frame(self):
+    def request_frame(self) -> PgImageWindow:
         """Requests a data frame over serial and displays it."""
-        self.serial.write(comm.REQUEST_COMMAND)
+        self.serial_command(comm.REQUEST_COMMAND)
+
         timeout = time.time() + comm.REQUEST_TIMEOUT
-        while self.serial.inWaiting() == 0:
-            time.sleep(1)
+        while self.data_buffer == []:
+            self.read_serial()
             if time.time() > timeout:
                 self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
                 return
-        raw_data = self.serial.readline().decode('utf-8')
+
+        raw_data = self.data_buffer.pop(0)
         try:
-            array = comm.process_data(raw_data)
+            array = comm.process_data(raw_data,self.c)
         except:
             self.update_terminal(
                 "<center><b>DATAFRAME FORMAT ERROR</b></center>")
             return
         # Open Image Window
-        self.image_dialog = PgImageWindow(
+        image_dialog = PgImageWindow(
             array, self.run, self.frame, self.run_dir, self)
         self.update_terminal(
             f"<center><b>Frame {self.frame} received</b></center>")
         self.frame += 1
+        return image_dialog
 
     def serial_connection_lost(self):
         """Notifies user that serial connection has been lost."""
@@ -230,6 +291,8 @@ class MainWindow(QMainWindow):
         self.serial = None
         error = QMessageBox.critical(
             self, "Serial Error", "The serial connection has encountered an error.")
+        self.btn_request_frame.setEnabled(False)
+        self.btn_burst.setEnabled(False)
         SerialSetup(self)
 
     def ping_serial(self):
@@ -237,40 +300,31 @@ class MainWindow(QMainWindow):
         # This one's a bit of a doozy so I'll comment it fully
         if self.serial and self.serial.isOpen():
             # Send 'ping'
-            self.serial.write(comm.PING_COMMAND)
+            self.serial_command(comm.PING_COMMAND)
+
             # Wait for a response (this should probably be done in a QThread.... whatever im not quite sure how to do it)
             timeout = time.process_time() + comm.PING_TIMEOUT
-            while self.serial.inWaiting() == 0:
+            while self.command_buffer == []:
+                self.read_serial()
                 if time.process_time() > timeout:
                     self.btn_request_frame.setEnabled(False)
+                    self.btn_cal.setEnabled(False)
                     self.update_terminal(
                         "<center><b>Serial device not responding (PING TIMEOUT)</b></center>")
                     return
-            # Read as many lines as are available, one of which may be the 'pong'
-            raw_lines = self.serial.readlines()
+            # Read lines until a pong is found. if a line doesn't contain the pong, pass it to the terminal
+            raw_line = self.command_buffer.pop(0)
             # If the 'pong' is in those lines, enable the button and pass the rest of the lines to the terminal
-            if comm.PING_RESPONSE in raw_lines:
+            if raw_line == comm.PING_RESPONSE.decode('utf-8'):
                 self.btn_request_frame.setEnabled(True)
-                if len(raw_lines) > 1:
-                    other_lines = raw_lines.pop(
-                        raw_lines.index(comm.PING_RESPONSE))
-                    for line in other_lines:
-                        self.update_terminal(line.decode('utf-8'))
-            # If the 'pong' isnt in those lines, just pass them to the terminal and deactivate the button
+                self.btn_cal.setEnabled(True)
+            # If the response isn't the pong, just deactivate the button
             else:
                 self.btn_request_frame.setEnabled(False)
-                for line in raw_lines:
-                    self.update_terminal(line.decode('utf-8'))
+                self.btn_cal.setEnabled(False)
         else:
             self.btn_request_frame.setEnabled(False)
-
-    def update_serial(self):
-        """Checks if available serial data and pushes to terminal display"""
-        if self.serial and self.serial.inWaiting() > 0:
-            line = self.serial.readline().decode('utf-8')
-            self.update_terminal(line)
-        else:
-            return
+            self.btn_cal.setEnabled(False)
 
     def center(self):
         """Centers the window in the active monitor"""
@@ -280,6 +334,12 @@ class MainWindow(QMainWindow):
         centerPoint = QApplication.desktop().screenGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
+
+    def serial_command(self, cmd: bytes):
+        self.serial.write(comm.CMD_START_SEQ)
+        self.serial.write(cmd)
+        self.serial.write(comm.CMD_END_SEQ)
+        self.serial.flush()
 
 
 class SerialSetup(QDialog):
@@ -364,12 +424,12 @@ class SerialSetup(QDialog):
         saved_selection = self.cbb_Baudrate.currentText()
         if self.cbb_SerialPort.currentText() == "Dummy":
             self.cbb_Baudrate.clear()
-            new_options = ["Choose a dummy mode...   "] + \
+            new_options = ["Choose a dummy mode...             "] + \
                 dummy.get_modes()
             self.cbb_Baudrate.addItems(new_options)
         else:
             self.cbb_Baudrate.clear()
-            new_options = ["Choose a baudrate...            "] + \
+            new_options = ["Choose a baudrate...                      "] + \
                 comm.list_baudrates()
             self.cbb_Baudrate.addItems(new_options)
         if saved_selection in new_options:

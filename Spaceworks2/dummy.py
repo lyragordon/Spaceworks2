@@ -3,7 +3,6 @@ import numpy
 import re
 import comm
 
-
 SAMPLE = 0
 RANDOM = 1
 LINEAR = 2
@@ -19,7 +18,6 @@ MODE_DICT = {
 NUM_VALS = 24*32
 RANGE = (10, 30)
 SPAN = RANGE[1]-RANGE[0]
-
 
 class DummySerial:
     """Dummy serial port that can send SAMPLE camera data, LINEAR sweep, or RANDOM data
