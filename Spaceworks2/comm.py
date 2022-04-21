@@ -44,7 +44,7 @@ def list_baudrates() -> list[str]:
 
 def process_data(raw: str, c: float) -> np.ndarray:
     """Converts raw string of image data to a 2d array"""
-    vector = np.array([float(i) for i in raw.split(',')]) + c
+    vector = np.array([float(i) for i in raw.split(',')]) + c #Adds the array with the calibration factor.
     array = np.reshape(vector, DATA_FORMAT)
     return np.rot90(array, k=2)
 

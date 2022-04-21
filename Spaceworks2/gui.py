@@ -118,9 +118,9 @@ class MainWindow(QMainWindow):
         self.serial = None
         self.command_buffer = []
         self.data_buffer = []
-        self.c = float(1)
-        self.f = float(0)
-        self.t = float(0)
+        self.c = float(1) #Stores calibration factor.
+        self.f = float(0) #Accepts float passed from serial.
+        self.t = float(0) #Target value temperature.
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
         # Request button that's only active when ping is reciprocated
@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
 
         raw_data = self.data_buffer.pop(0)
         try:
-            array = comm.process_data(raw_data,self.c)
+            array = comm.process_data(raw_data,self.c) #Passes image data with the calibration factor.
         except:
             self.update_terminal(
                 "<center><b>DATAFRAME FORMAT ERROR</b></center>")
