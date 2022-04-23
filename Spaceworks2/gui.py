@@ -13,93 +13,94 @@ import matplotlib
 from pgcolorbar.colorlegend import ColorLegendItem
 from typing import Tuple
 from pathlib import Path
+import plotly.express as px
 
-class PgImageWindow(QMainWindow):
-    """Image dialog containing pyqtgraph heatmap"""
+# class PgImageWindow(QMainWindow):
+#     """Image dialog containing pyqtgraph heatmap"""
 
-    def __init__(self, data: np.ndarray, run: int, frame: int, run_dir: Path, parent=None):
-        super().__init__(parent)
-        # variables
-        self.data = data
-        self.run_dir = run_dir
-        self.frame = frame
-        # Plot and ViewBox
-        self.plotItem = pg.PlotItem()
-        self.viewBox = self.plotItem.getViewBox()
-        self.viewBox.setAspectLocked(True)
-        # Heatmap ImageItem
-        self.imageItem = pg.ImageItem()
-        self.imageItem.setImage(np.transpose(self.data), autoLevels=True)
-        self.imageItem.setAutoDownsample(True)
-        # Default scaling of heatmap
-        nRows, nCols = data.shape
-        self.plotItem.setRange(xRange=[-5, nCols+5], yRange=[0, nRows])
-        # Set colormap
-        self.imageItem.setColorMap(pg.colormap.getFromMatplotlib('plasma'))
-        self.plotItem.addItem(self.imageItem)
-        # Generate crosshair at hottest pixel
-        self.crosshair = pg.TargetItem(
-            pos=[16, 12], movable=True, size=50, label=self.get_label_at_pos, labelOpts={'offset': (40, -40), 'color': 'k', 'fill': pg.mkBrush((255, 255, 255, 127))}, pen=pg.mkPen(color='k', width=3))
-        self.crosshair.setPos(self.get_max_pos(self.data))
-        self.plotItem.addItem(self.crosshair)
-        # Generate colorbar
-        self.colorLegendItem = ColorLegendItem(
-            imageItem=self.imageItem,
-            showHistogram=True,
-            label='Temperature (°C)')
-        self.colorLegendItem.setMinimumHeight(60)
-        self.colorLegendItem.autoScaleFromImage()
-        # Graphics Layout
-        self.graphicsWidget = pg.GraphicsLayoutWidget()
-        self.graphicsWidget.addItem(self.plotItem, 0, 0)
-        self.graphicsWidget.addItem(self.colorLegendItem, 0, 1)
-        # Window layout
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.graphicsWidget)
-        # Window settings
-        self.main_widget = QWidget()
-        self.main_widget.setLayout(self.layout)
-        self.setCentralWidget(self.main_widget)
-        self.setWindowTitle(f"Run {run} - Frame {frame}")
-        self.resize(1200, 800)
-        self.center()
-        self.save_img()
-        self.save_csv()
+#     def __init__(self, data: np.ndarray, run: int, frame: int, run_dir: Path, parent=None):
+#         super().__init__(parent)
+#         # variables
+#         self.data = data
+#         self.run_dir = run_dir
+#         self.frame = frame
+#         # Plot and ViewBox
+#         self.plotItem = pg.PlotItem()
+#         self.viewBox = self.plotItem.getViewBox()
+#         self.viewBox.setAspectLocked(True)
+#         # Heatmap ImageItem
+#         self.imageItem = pg.ImageItem()
+#         self.imageItem.setImage(np.transpose(self.data), autoLevels=True)
+#         self.imageItem.setAutoDownsample(True)
+#         # Default scaling of heatmap
+#         nRows, nCols = data.shape
+#         self.plotItem.setRange(xRange=[-5, nCols+5], yRange=[0, nRows])
+#         # Set colormap
+#         self.imageItem.setColorMap(pg.colormap.getFromMatplotlib('plasma'))
+#         self.plotItem.addItem(self.imageItem)
+#         # Generate crosshair at hottest pixel
+#         self.crosshair = pg.TargetItem(
+#             pos=[16, 12], movable=True, size=50, label=self.get_label_at_pos, labelOpts={'offset': (40, -40), 'color': 'k', 'fill': pg.mkBrush((255, 255, 255, 127))}, pen=pg.mkPen(color='k', width=3))
+#         self.crosshair.setPos(self.get_max_pos(self.data))
+#         self.plotItem.addItem(self.crosshair)
+#         # Generate colorbar
+#         self.colorLegendItem = ColorLegendItem(
+#             imageItem=self.imageItem,
+#             showHistogram=True,
+#             label='Temperature (°C)')
+#         self.colorLegendItem.setMinimumHeight(60)
+#         self.colorLegendItem.autoScaleFromImage()
+#         # Graphics Layout
+#         self.graphicsWidget = pg.GraphicsLayoutWidget()
+#         self.graphicsWidget.addItem(self.plotItem, 0, 0)
+#         self.graphicsWidget.addItem(self.colorLegendItem, 0, 1)
+#         # Window layout
+#         self.layout = QVBoxLayout()
+#         self.layout.addWidget(self.graphicsWidget)
+#         # Window settings
+#         self.main_widget = QWidget()
+#         self.main_widget.setLayout(self.layout)
+#         self.setCentralWidget(self.main_widget)
+#         self.setWindowTitle(f"Run {run} - Frame {frame}")
+#         self.resize(1200, 800)
+#         self.center()
+#         self.save_img()
+#         self.save_csv()
 
-    def center(self):
-        """Centers the window in the active monitor"""
-        frameGm = self.frameGeometry()
-        screen = QApplication.desktop().screenNumber(
-            QApplication.desktop().cursor().pos())
-        centerPoint = QApplication.desktop().screenGeometry(screen).center()
-        frameGm.moveCenter(centerPoint)
-        self.move(frameGm.topLeft())
+#     def center(self):
+#         """Centers the window in the active monitor"""
+#         frameGm = self.frameGeometry()
+#         screen = QApplication.desktop().screenNumber(
+#             QApplication.desktop().cursor().pos())
+#         centerPoint = QApplication.desktop().screenGeometry(screen).center()
+#         frameGm.moveCenter(centerPoint)
+#         self.move(frameGm.topLeft())
 
-    def get_label_at_pos(self, x_flt, y_flt) -> str:
-        """Generates a label for the crosshairs at a specific point"""
-        x = int(x_flt)
-        y = int(y_flt)
-        return f"{x},{y}\n{self.data[y][x]} °C"
+#     def get_label_at_pos(self, x_flt, y_flt) -> str:
+#         """Generates a label for the crosshairs at a specific point"""
+#         x = int(x_flt)
+#         y = int(y_flt)
+#         return f"{x},{y}\n{self.data[y][x]} °C"
 
-    def get_max_pos(self, data: np.ndarray) -> Tuple:
-        """Returns the position of the center of the hottest pixel"""
-        max_index = data.argmax()
-        y = int(max_index/32)
-        x = ((max_index) % 32)
-        return x+0.5, y+0.5
+#     def get_max_pos(self, data: np.ndarray) -> Tuple:
+#         """Returns the position of the center of the hottest pixel"""
+#         max_index = data.argmax()
+#         y = int(max_index/32)
+#         x = ((max_index) % 32)
+#         return x+0.5, y+0.5
 
-    def save_img(self):
-        """Saves the heatmap as a png to the current run directory"""
-        exporter = pyqtgraph.exporters.ImageExporter(
-            self.graphicsWidget.scene())
-        exporter.export(
-            str((self.run_dir / f"frame_{self.frame}.png").resolve()))
+#     def save_img(self):
+#         """Saves the heatmap as a png to the current run directory"""
+#         exporter = pyqtgraph.exporters.ImageExporter(
+#             self.graphicsWidget.scene())
+#         exporter.export(
+#             str((self.run_dir / f"frame_{self.frame}.png").resolve()))
 
-    def save_csv(self):
-        """Saves the data array as a csv."""
-        with open(self.run_dir / f"frame_{self.frame}.csv", 'w') as file:
-            for y in self.data:
-                file.write(",".join([str(x) for x in y]) + ';\n')
+#     def save_csv(self):
+#         """Saves the data array as a csv."""
+#         with open(self.run_dir / f"frame_{self.frame}.csv", 'w') as file:
+#             for y in self.data:
+#                 file.write(",".join([str(x) for x in y]) + ';\n')
 
 
 class MainWindow(QMainWindow):
@@ -118,13 +119,15 @@ class MainWindow(QMainWindow):
         self.serial = None
         self.command_buffer = []
         self.data_buffer = []
-        self.c = float(1) #Stores calibration factor.
+        self.a = np.empty([24,32])
+        self.c = float(0) #Stores calibration factor.
         self.f = float(0) #Accepts float passed from serial.
         self.t = float(0) #Target value temperature.
+        self.q = float(0)
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
         # Request button that's only active when ping is reciprocated
-        self.btn_request_frame = QPushButton("Request Frame", self)
+        self.btn_request_frame = QPushButton("Request Frame.", self)
         self.btn_request_frame.resize(self.btn_request_frame.sizeHint())
         self.btn_request_frame.clicked.connect(self.evt_btn_request)
         self.btn_request_frame.setEnabled(False)
@@ -132,7 +135,7 @@ class MainWindow(QMainWindow):
         self.ping_timer.setInterval(comm.PING_INTERVAL * 1000)
         self.ping_timer.timeout.connect(self.ping_serial)
         self.ping_timer.start()
-        self.btn_cal = QPushButton("Thermistor Calibration", self)
+        self.btn_cal = QPushButton("Calibrate.", self)
         self.btn_cal.resize(self.btn_cal.sizeHint())
         self.btn_cal.clicked.connect(self.evt_cal)
         self.btn_cal.setEnabled(False)
@@ -184,14 +187,10 @@ class MainWindow(QMainWindow):
             return False
 
     def evt_cal(self):
-        print("Button Cal.")
         timeout = time.time() + comm.REQUEST_TIMEOUT
         self.t, enter = QInputDialog.getDouble(self, 'Target Value', 'Enter target value if known.', 25, -273.15, 273.15, 3)
-        print(enter)
         if enter:
-            print("Enter.")
             self.serial_command(comm.AVG_COMMAND)
-            print("CommAvg.")
             while self.f == 0:
                 self.read_serial()
                 if time.time() > timeout:
@@ -199,20 +198,7 @@ class MainWindow(QMainWindow):
                     return
             self.c = float(self.f) - self.t
             self.f = float(0)
-            print("AvgReceived/Calculated.")
-        else:
-            print("No Enter.")
-            self.serial_command(comm.CAL_COMMAND)
-            print("CommCal.")
-            while self.f == 0:
-                self.read_serial()
-                if time.time() > timeout:
-                    self.update_terminal("<center><b>REQUEST TIMEOUT</b></center>")
-                    return
-            self.c = float(self.f)
-            self.f =  float(0)
-            print("CalReceived.")
-        self.update_terminal(f"<center><b>Calibration Factor: {self.c} </b></center>")
+        self.update_terminal(f"<center><b>Calibration Factor: {self.c}</b></center>")
 
     def update_terminal(self, line: str):
         """Adds a line to the terminal display."""
@@ -221,10 +207,20 @@ class MainWindow(QMainWindow):
         self.vert_layout.update()
 
     def evt_btn_request(self):
-        img_dialog = self.request_frame()
-        img_dialog.show()
+        self.q, enter = QInputDialog.getInt(self, 'Frame Quantity.', 'Enter amount of pictures desired.', 1, 0, 50, 1)
+        if enter:
+            for i in range(self.q):
+                self.request_frame()
+                maxHeat = np.max(self.a)
+                minHeat = np.min(self.a)
+                avgHeat = np.average(self.a)
+                fig = px.imshow(self.a, text_auto=True, labels=dict(color="Temperaute, Celsius"), template = 'plotly_dark', title='Minimum: {0:0.2f} Celsius, Maximum: {1:0.2f} Celsius, Average: {2:0.2f} Celsius.'.format(minHeat,maxHeat,avgHeat))
+                fig.write_image("C:/Users/ranes/Documents/SpaceWorks/PlotsTrial/fig{}.png".format(self.frame))
+                fig.show()
+                self.update_terminal(f"<center><b>Frame {self.frame} received</b></center>")
+                self.frame += 1
 
-    def request_frame(self) -> PgImageWindow:
+    def request_frame(self):
         """Requests a data frame over serial and displays it."""
         self.serial_command(comm.REQUEST_COMMAND)
 
@@ -237,18 +233,12 @@ class MainWindow(QMainWindow):
 
         raw_data = self.data_buffer.pop(0)
         try:
-            array = comm.process_data(raw_data,self.c) #Passes image data with the calibration factor.
+            self.a = comm.process_data(raw_data,self.c) #Passes image data with the calibration factor.
+            return
         except:
             self.update_terminal(
                 "<center><b>DATAFRAME FORMAT ERROR</b></center>")
             return
-        # Open Image Window
-        image_dialog = PgImageWindow(
-            array, self.run, self.frame, self.run_dir, self)
-        self.update_terminal(
-            f"<center><b>Frame {self.frame} received</b></center>")
-        self.frame += 1
-        return image_dialog
 
     def serial_connection_lost(self):
         """Notifies user that serial connection has been lost."""

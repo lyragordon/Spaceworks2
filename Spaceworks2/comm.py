@@ -66,19 +66,16 @@ def remove_run_dir(run: int):
     os.rmdir(run_dir)
 
 def is_command(raw: bytes) -> bool:
-    print("iscommand")
     return True if raw[0] == int.from_bytes(CMD_START_SEQ, 'little') and raw[-1] == int.from_bytes(CMD_END_SEQ, 'little') else False
 
 def decode_command(raw: bytes) -> str:
     return raw[1:-1].decode('utf-8')
 
 def is_dataframe(raw: bytes) -> bool:
-    print("isframe")
     return True if raw[0] == int.from_bytes(DF_START_SEQ, 'little') and raw[-1] == int.from_bytes(DF_END_SEQ, 'little') else False
 
 def decode_df(raw: bytes) -> str:
     return raw[1:-1].decode('utf-8')
 
 def is_float(raw: bytes) -> bool:
-    print("isfloat")
     return True if raw[0] == int.from_bytes(FLOAT_START_SEQ,'little') and raw[-1] == int.from_bytes(FLOAT_END_SEQ, 'little') else False
