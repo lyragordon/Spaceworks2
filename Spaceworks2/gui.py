@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
                 self.frame += 1
             self.update_terminal(f"<center><b>Dataset {self.dataSet} with {self.q} frames received.</b></center>")
             self.dataSet +=1
-            self.frame = 0
+            self.frame = 1
 
     def request_frame(self):
         """Requests a data frame over serial and displays it."""
