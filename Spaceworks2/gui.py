@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
         fig.write_image("{}/Frame {}.png".format(self.sdS,self.sFrame))
         np.savetxt(f"{self.sdS}/Frame{self.sFrame}.csv",self.a,delimiter=",")
         fig.show()
-        self.update_terminal(f"<center><b>Frame {self.sFrame} received.</b></center>")
+        self.update_terminal(f"<center><b>Shutter Frame {self.sFrame} received.</b></center>")
         self.sFrame += 1
 
     def update_terminal(self, line: str):
@@ -168,6 +168,7 @@ class MainWindow(QMainWindow):
                 self.frame += 1
             self.update_terminal(f"<center><b>Dataset {self.dataSet} with {self.q} frames received.</b></center>")
             self.dataSet +=1
+            self.frame = 0
 
     def request_frame(self):
         """Requests a data frame over serial and displays it."""
