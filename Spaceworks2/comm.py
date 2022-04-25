@@ -12,7 +12,7 @@ AVG_COMMAND = 'a'.encode('utf-8')
 
 PING_COMMAND = 'p'.encode('utf-8')
 PING_RESPONSE = 'o'.encode('utf-8')
-PING_TIMEOUT = 2  # seconds
+PING_TIMEOUT = 3  # seconds
 PING_INTERVAL = 5  # seconds
 
 DF_START_SEQ = '['.encode('utf-8')
@@ -26,12 +26,12 @@ FLOAT_END_SEQ = '~'.encode('utf-8')
 
 DATA_FORMAT = (24, 32)
 
-SCRIPT_DIR = Path(__file__)
-DATA_DIR = (SCRIPT_DIR.parent.parent / "data").resolve()
+DATA_DIR = (Path(__file__).parent.parent / "data").resolve()
+RUN_DIR = DATA_DIR
 
 def list_serial_ports() -> list[str]:
     """Returns a list of available serial ports"""
-    ports = ["Dummy"]
+    ports = []
     comports = list_ports.comports()
     if comports:
         for port in comports:
@@ -56,9 +56,14 @@ def get_run() -> int:
 
 def init_run(run: int) -> Path:
     """generates a run folder"""
-    run_dir = DATA_DIR / f"run_{run}"
-    run_dir.mkdir(parents=True)
-    return run_dir
+    RUN_DIR = DATA_DIR / f"run_{run}"
+    RUN_DIR.mkdir(parents=True)
+    return RUN_DIR
+
+def init_dSet(dSet: int) -> Path:
+    dSet_dir = RUN_DIR / f"dataSet{dSet}"
+    dSet_dir.mkdir(parents=True)
+    return dSet_dir
 
 def remove_run_dir(run: int):
     """removes a run folder"""
