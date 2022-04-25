@@ -18,6 +18,8 @@ class MainWindow(QMainWindow):
         self.run_dir = comm.init_run(self.run)
         self.dataSet = 1
         self.frame = 1
+        self.sdS = self.run_dir / "Shutter Dataset"
+        self.sdS.mkdir(parents=True)
         self.setWindowTitle(f"SW2 Optics.")
         self.setWindowIcon(self.style().standardIcon(getattr(QStyle, 'SP_ComputerIcon')))
         self.resize(500, 500)
@@ -29,7 +31,7 @@ class MainWindow(QMainWindow):
         self.f = float(0) #Accepts float passed from serial.
         self.t = float(0) #Target value temperature.
         self.q = float(0)
-        self.ab = np.zeros((1,32))
+        self.sFrame = 1
         # prompt for serial config
         self.dlg_serial_setup = SerialSetup(self)
         # Request button that's only active when ping is reciprocated
@@ -45,6 +47,10 @@ class MainWindow(QMainWindow):
         self.btn_cal.resize(self.btn_cal.sizeHint())
         self.btn_cal.clicked.connect(self.evt_cal)
         self.btn_cal.setEnabled(False)
+        self.btn_shutt = QPushButton("Shutter Data.", self)
+        self.btn_shutt.resize(self.btn_shutt.sizeHint())
+        self.btn_shutt.clicked.connect(self.evt_shutt)
+        self.btn_shutt.setEnabled(False)
         # Terminal display
         self.terminal = QTextBrowser(self)
 
@@ -56,6 +62,8 @@ class MainWindow(QMainWindow):
         self.vert_layout = QVBoxLayout(self)
         self.vert_layout.addWidget(self.btn_request_frame)
         self.vert_layout.addWidget(self.btn_cal)
+        self.vert_layout.addWidget(self.btn_shutt)
+
         self.vert_layout.addWidget(self.terminal)
         self.window = QWidget(self)
         self.window.setLayout(self.vert_layout)
@@ -102,9 +110,41 @@ class MainWindow(QMainWindow):
                 if time.time() > timeout:
                     self.update_terminal("<center><b>REQUEST TIMEOUT.</b></center>")
                     return
-            self.c = float(self.f) - self.t
+            self.c = self.t - float(self.f)
             self.f = float(0)
         self.update_terminal(f"<center><b>Calibration Factor: {self.c}.</b></center>")
+    
+    def evt_shutt(self):
+        timeout = time.time() + comm.REQUEST_TIMEOUT
+        self.serial_command(comm.THERM_COMMAND)
+        while self.f == 0:
+            self.read_serial()
+            if time.time() > timeout:
+                self.update_terminal("<center><b>REQUEST TIMEOUT.</b></center>")
+                return
+        self.update_terminal(f"<center><b>Thermistor Value: {self.f}</b></center>")
+        timeout = time.time() + comm.REQUEST_TIMEOUT
+        self.serial_command(comm.SHUTT_COMMAND)
+        while self.data_buffer == []:
+            self.read_serial()
+            if time.time() > timeout:
+                self.update_terminal("<center><b>REQUEST TIMEOUT.</b></center>")
+                return
+        raw_data = self.data_buffer.pop(0)
+        try:
+            self.a = comm.process_data(raw_data,self.c) #Passes image data with the calibration factor.
+        except:
+            self.update_terminal("<center><b>DATAFRAME FORMAT ERROR.</b></center>")
+            return
+        maxHeat = np.max(self.a)
+        minHeat = np.min(self.a)
+        avgHeat = np.average(self.a)
+        fig = px.imshow(self.a, text_auto=False, labels=dict(color="Temperaute, Celsius"), template = 'plotly_dark', title='Shutter Frame {0:g}, Minimum: {1:0.2f} Celsius, Maximum: {2:0.2f} Celsius, Average: {3:0.2f} Celsius, Thermistor Value: {4:0.2f}'.format(self.sFrame,minHeat,maxHeat,avgHeat,float(self.f)))
+        fig.write_image("{}/Frame {}.png".format(self.sdS,self.sFrame))
+        np.savetxt(f"{self.sdS}/Frame{self.sFrame}.csv",self.a,delimiter=",")
+        fig.show()
+        self.update_terminal(f"<center><b>Frame {self.sFrame} received.</b></center>")
+        self.sFrame += 1
 
     def update_terminal(self, line: str):
         """Adds a line to the terminal display."""
@@ -115,17 +155,18 @@ class MainWindow(QMainWindow):
     def evt_btn_request(self):
         self.q, enter = QInputDialog.getInt(self, 'Frame Quantity.', 'Enter amount of pictures desired.', 1, 0, 50, 1)
         if enter:
-            dS = comm.init_dSet(self.dataSet)
+            dS = comm.init_dSet(self.dataSet,self.run_dir)
             for i in range(self.q):
                 self.request_frame()
                 maxHeat = np.max(self.a)
                 minHeat = np.min(self.a)
                 avgHeat = np.average(self.a)
-                fig = px.imshow(self.a, text_auto=True, labels=dict(color="Temperaute, Celsius"), template = 'plotly_dark', title='Minimum: {0:0.2f} Celsius, Maximum: {1:0.2f} Celsius, Average: {2:0.2f} Celsius.'.format(minHeat,maxHeat,avgHeat))
+                fig = px.imshow(self.a, text_auto=False, labels=dict(color="Temperaute, Celsius"), template = 'plotly_dark', title='Dataset {0:g} Frame {1:g}, Minimum: {2:0.2f} Celsius, Maximum: {3:0.2f} Celsius, Average: {4:0.2f} Celsius.'.format(self.dataSet,self.frame,minHeat,maxHeat,avgHeat))
                 fig.write_image("{}/Frame {}.png".format(dS,self.frame))
+                np.savetxt(f"{dS}/Frame{self.frame}.csv",self.a,delimiter=",")
                 fig.show()
-                self.update_terminal(f"<center><b>Frame {self.frame} received.</b></center>")
                 self.frame += 1
+            self.update_terminal(f"<center><b>Dataset {self.dataSet} with {self.q} frames received.</b></center>")
             self.dataSet +=1
 
     def request_frame(self):
@@ -179,10 +220,9 @@ class MainWindow(QMainWindow):
     def evt_serial_connection_error(self):
         """Display error if serial connection dropped. Prompts for Serial setup"""
         self.serial = None
-        error = QMessageBox.critical(
-            self, "Serial Error", "The serial connection has encountered an error.")
+        error = QMessageBox.critical(self, "Serial Error", "The serial connection has encountered an error.")
         self.btn_request_frame.setEnabled(False)
-        self.btn_burst.setEnabled(False)
+        self.btn_cal.setEnabled(False)
         SerialSetup(self)
 
     def ping_serial(self):
@@ -199,6 +239,7 @@ class MainWindow(QMainWindow):
                 if time.process_time() > timeout:
                     self.btn_request_frame.setEnabled(False)
                     self.btn_cal.setEnabled(False)
+                    self.btn_shutt.setEnabled(False)
                     self.update_terminal("<center><b>Serial device not responding (PING TIMEOUT).</b></center>")
                     return
             # Read lines until a pong is found. if a line doesn't contain the pong, pass it to the terminal
@@ -207,13 +248,16 @@ class MainWindow(QMainWindow):
             if raw_line == comm.PING_RESPONSE.decode('utf-8'):
                 self.btn_request_frame.setEnabled(True)
                 self.btn_cal.setEnabled(True)
+                self.btn_shutt.setEnabled(True)
             # If the response isn't the pong, just deactivate the button
             else:
                 self.btn_request_frame.setEnabled(False)
                 self.btn_cal.setEnabled(False)
+                self.btn_shutt.setEnabled(False)
         else:
             self.btn_request_frame.setEnabled(False)
             self.btn_cal.setEnabled(False)
+            self.btn_shutt.setEnabled(False)
 
     def center(self):
         """Centers the window in the active monitor"""

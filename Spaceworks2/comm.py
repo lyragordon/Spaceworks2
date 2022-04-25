@@ -9,6 +9,8 @@ REQUEST_TIMEOUT = 30  # seconds
 
 CAL_COMMAND = 'c'.encode('utf-8')
 AVG_COMMAND = 'a'.encode('utf-8')
+SHUTT_COMMAND = 's'.encode('utf-8')
+THERM_COMMAND = 't'.encode('utf-8')
 
 PING_COMMAND = 'p'.encode('utf-8')
 PING_RESPONSE = 'o'.encode('utf-8')
@@ -60,8 +62,8 @@ def init_run(run: int) -> Path:
     RUN_DIR.mkdir(parents=True)
     return RUN_DIR
 
-def init_dSet(dSet: int) -> Path:
-    dSet_dir = RUN_DIR / f"dataSet{dSet}"
+def init_dSet(dSet: int,run: Path) -> Path:
+    dSet_dir = run / f"dataSet{dSet}"
     dSet_dir.mkdir(parents=True)
     return dSet_dir
 
