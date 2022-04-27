@@ -202,7 +202,7 @@ class MainWindow(QMainWindow):
             self.evt_serial_connection_error()
 
         self.update_terminal(
-            "<center><b>Serial connection initiated.</b></center>")
+            "<center><b>Serial terminal opened.</b></center>")
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Prompt for close if serial active. Delete run directory if no images were saved"""
